@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode */
+    --bg: #f1f5f9;
+    --panel: #ffffff;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.5);
+    --accent2: #f59e0b;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --input-bg: #f8fafc;
+    --error: #ef4444;
+    --success: #10b981;
+  }
+
+  .dark {
+    /* Dark Mode */
+    --bg: #080b14;
+    --panel: #0e1220;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.35);
+    --accent2: #f59e0b;
+    --text: #e8eaf6;
+    --muted: #5a6482;
+    --border: #1e2438;
+    --input-bg: #131826;
+    --error: #f87171;
+    --success: #34d399;
+  }
+
+  body {
+    @apply bg-bg text-text font-epilogue overflow-hidden min-h-screen flex;
+  }
+}
+
+/* Custom Animations */
+@keyframes slideLeft { from{opacity:0;transform:translateX(-30px)} to{opacity:1;transform:translateX(0)} }
+@keyframes slideRight { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+
+.animate-slideLeft { animation: slideLeft 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-slideRight { animation: slideRight 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both; }
+.animate-drift { animation: drift 12s ease-in-out infinite; }
+.delay-neg-4 { animation-delay: -4s; }
+.delay-neg-8 { animation-delay: -8s; }

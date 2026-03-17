@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ServiceMate – Register</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #080b14;
+    --panel: #0e1220;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.3);
+    --accent2: #f59e0b;
+    --accent3: #34d399;
+    --text: #e8eaf6;
+    --muted: #5a6482;
+    --border: #1e2438;
+    --input-bg: #131826;
+    --error: #f87171;
+    --success: #34d399;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Epilogue',sans-serif; min-height:100vh; display:flex; overflow-x:hidden; }
+
+  .bg-layer { position:fixed; inset:0; z-index:0; overflow:hidden; }
+  .orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:.15; animation:drift 14s ease-in-out infinite; }
+  .orb1 { width:500px; height:500px; background:#3b82f6; bottom:-100px; right:-100px; animation-delay:0s; }
+  .orb2 { width:350px; height:350px; background:#f59e0b; top:-80px; left:-80px; animation-delay:-5s; }
+  .orb3 { width:280px; height:280px; background:#8b5cf6; top:50%; left:30%; animation-delay:-10s; }
+  @keyframes drift { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-20px) scale(1.04)} }
+  .grid-dots { position:fixed; inset:0; z-index:0; background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px); background-size:28px 28px; }
+
+  .page { position:relative; z-index:1; display:flex; width:100%; min-height:100vh; }
+
+  /* Left progress panel */
+  .progress-panel {
+    width:340px; min-height:100vh; border-right:1px solid var(--border);
+    display:flex; flex-direction:column; padding:48px 40px;
+    animation:slideLeft 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes slideLeft { from{opacity:0;transform:translateX(-24px)} to{opacity:1;transform:translateX(0)} }
+  .logo { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; margin-bottom:48px; }
+  .logo span { color:var(--accent); }
+
+  .steps-title { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:20px; }
+  .steps { display:flex; flex-direction:column; gap:0; }
+  .step { display:flex; gap:16px; align-items:flex-start; }
+  .step-line-wrap { display:flex; flex-direction:column; align-items:center; }
+  .step-dot {
+    width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.78rem; font-weight:700; flex-shrink:0; transition:.3s;
+    border:2px solid var(--border);
+  }
+  .step-dot.done { background:var(--accent3); border-color:var(--accent3); color:#000; }
+  .step-dot.active { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 0 12px var(--accent-glow); }
+  .step-dot.pending { background:var(--input-bg); color:var(--muted); }
+  .step-connector { width:2px; height:32px; margin:4px 0; transition:.3s; }
+  .step-connector.done { background:var(--accent3); }
+  .step-connector.pending { background:var(--border); }
+  .step-content { padding-top:4px; padding-bottom:36px; }
+  .step-label { font-size:.9rem; font-weight:500; transition:.3s; }
+  .step-label.active { color:var(--text); }
+  .step-label.done { color:var(--accent3); }
+  .step-label.pending { color:var(--muted); }
+  .step-desc { font-size:.75rem; color:var(--muted); margin-top:3px; }
+
+  .panel-bottom { margin-top:auto; }
+  .login-prompt { font-size:.83rem; color:var(--muted); }
+  .login-prompt a { color:var(--accent); text-decoration:none; font-weight:500; }
+  .login-prompt a:hover { text-decoration:underline; }
+
+  /* Right form panel */
+  .form-panel {
+    flex:1; display:flex; flex-direction:column; justify-content:center;
+    padding:48px 64px;
+    animation:slideRight 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+  }
+  @keyframes slideRight { from{opacity:0;transform:translateX(24px)} to{opacity:1;transform:translateX(0)} }
+
+  .form-header { margin-bottom:32px; }
+  .step-indicator { font-size:.72rem; color:var(--accent); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+  .form-title { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; letter-spacing:-.5px; margin-bottom:6px; }
+  .form-sub { font-size:.85rem; color:var(--muted); }
+
+  /* Role selector */
+  .role-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:28px; }
+  .role-card {
+    background:var(--input-bg); border:2px solid var(--border);
+    border-radius:14px; padding:18px 10px; cursor:pointer;
+    text-align:center; transition:all .25s;
+  }
+  .role-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .role-card.selected { border-color:var(--accent); background:rgba(59,130,246,.1); }
+  .role-card .rc-icon { font-size:2rem; margin-bottom:10px; display:block; }
+  .role-card .rc-name { font-family:'Syne',sans-serif; font-size:.85rem; font-weight:700; margin-bottom:4px; }
+  .role-card .rc-desc { font-size:.7rem; color:var(--muted); line-height:1.4; }
+  .role-card.selected .rc-name { color:var(--accent); }
+
+  /* Fields */
+  .fields-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .field { position:relative; }
+  .field.full { grid-column:1/-1; }
+  .field-label { font-size:.7rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; display:block; }
+  .field-wrap { position:relative; }
+  .field-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:.95rem; pointer-events:none; }
+  .field-input {
+    width:100%; background:var(--input-bg); border:1.5px solid var(--border);
+    border-radius:10px; padding:12px 14px 12px 42px;
+    color:var(--text); font-family:'Epilogue',sans-serif; font-size:.88rem;
+    outline:none; transition:all .2s;
+  }
+  .field-input:focus { border-color:var(--accent); background:var(--panel); box-shadow:0 0 0 3px var(--accent-glow); }
+  .field-input.error { border-color:var(--error); }
+  .field-input::placeholder { color:var(--muted); }
+  .toggle-pw { position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--muted); font-size:.85rem; user-select:none; transition:.2s; }
+  .toggle-pw:hover { color:var(--text); }
+  .error-msg { font-size:.72rem; color:var(--error); margin-top:5px; display:none; }
+  .error-msg.show { display:block; }
+
+  /* Password strength */
+  .pw-strength { margin-top:8px; }
+  .pw-bars { display:flex; gap:4px; margin-bottom:4px; }
+  .pw-bar { flex:1; height:3px; border-radius:2px; background:var(--border); transition:.3s; }
+  .pw-bar.weak { background:#f87171; }
+  .pw-bar.fair { background:var(--accent2); }
+  .pw-bar.strong { background:var(--accent3); }
+  .pw-label { font-size:.7rem; color:var(--muted); }
+
+  /* Terms */
+  .terms-row { display:flex; align-items:flex-start; gap:10px; margin:20px 0; }
+  .terms-check { width:18px; height:18px; accent-color:var(--accent); flex-shrink:0; margin-top:1px; cursor:pointer; }
+  .terms-text { font-size:.8rem; color:var(--muted); line-height:1.5; }
+  .terms-text a { color:var(--accent); text-decoration:none; }
+
+  /* Buttons */
+  .btn-row { display:flex; gap:10px; }
+  .btn {
+    padding:13px 24px; border-radius:10px; border:none; cursor:pointer;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:.88rem;
+    transition:all .2s; letter-spacing:.2px;
+  }
+  .btn-primary { background:var(--accent); color:#fff; flex:1; position:relative; overflow:hidden; }
+  .btn-primary:hover { background:#2563eb; box-shadow:0 8px 24px var(--accent-glow); transform:translateY(-1px); }
+  .btn-ghost { background:var(--input-bg); color:var(--muted); border:1.5px solid var(--border); }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--text); }
+  .btn-primary.loading .btn-text { opacity:0; }
+  .btn-primary .btn-loader { display:none; position:absolute; inset:0; align-items:center; justify-content:center; }
+  .btn-primary.loading .btn-loader { display:flex; }
+  .spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* Alert */
+  .alert { padding:12px 16px; border-radius:10px; font-size:.83rem; margin-bottom:20px; display:none; align-items:center; gap:10px; animation:fadeUp .3s ease; }
+  .alert.show { display:flex; }
+  .alert-success { background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.3); color:var(--success); }
+  .alert-error { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.3); color:var(--error); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Success screen */
+  .success-screen {
+    display:none; text-align:center; padding:40px 20px;
+    animation:fadeUp .5s ease both;
+  }
+  .success-screen.show { display:block; }
+  .success-icon { font-size:4rem; margin-bottom:20px; animation:pop .5s cubic-bezier(0.175,0.885,0.32,1.275) .2s both; }
+  @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+  .success-title { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:10px; }
+  .success-sub { font-size:.9rem; color:var(--muted); margin-bottom:28px; }
+
+  /* Slide animation for steps */
+  .step-form { animation:fadeUp .4s ease both; }
+</style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+<div class="grid-dots"></div>
+
+<div class="page">
+  <!-- Progress Panel -->
+  <div class="progress-panel">
+    <div class="logo">Service<span>Mate</span></div>
+    <div class="steps-title">Registration Steps</div>
+    <div class="steps" id="stepsPanel">
+      <div class="step">
+        <div class="step-line-wrap">
+          <div class="step-dot active" id="dot1">1</div>
+          <div class="step-connector pending" id="conn1"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-label active" id="lbl1">Choose Role</div>
+          <div class="step-desc">Who are you joining as?</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-line-wrap">
+          <div class="step-dot pending" id="dot2">2</div>
+          <div class="step-connector pending" id="conn2"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-label pending" id="lbl2">Your Details</div>
+          <div class="step-desc">Name, email & password</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-line-wrap">
+          <div class="step-dot pending" id="dot3">3</div>
+          <div class="step-connector pending" id="conn3"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-label pending" id="lbl3">Confirm & Submit</div>
+          <div class="step-desc">Review and create account</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-bottom">
+      <div class="login-prompt">Already have an account?<br><a href="login.html">Sign in here →</a></div>
+    </div>
+  </div>
+
+  <!-- Form Panel -->
+  <div class="form-panel">
+    <!-- Alert -->
+    <div class="alert" id="alertBox"><span id="alertIcon">⚠️</span><span id="alertMsg"></span></div>
+
+    <!-- STEP 1: Role -->
+    <div id="step1" class="step-form">
+      <div class="form-header">
+        <div class="step-indicator">Step 1 of 3</div>
+        <div class="form-title">Join as...</div>
+        <div class="form-sub">Choose the role that best describes you</div>
+      </div>
+      <div class="role-grid">
+        <div class="role-card selected" onclick="pickRole(this,'CUSTOMER')">
+          <span class="rc-icon">👤</span>
+          <div class="rc-name">Customer</div>
+          <div class="rc-desc">Book services from local professionals</div>
+        </div>
+        <div class="role-card" onclick="pickRole(this,'PROVIDER')">
+          <span class="rc-icon">🔧</span>
+          <div class="rc-name">Provider</div>
+          <div class="rc-desc">Offer your services and earn money</div>
+        </div>
+        <div class="role-card" onclick="pickRole(this,'ADMIN')">
+          <span class="rc-icon">🛡️</span>
+          <div class="rc-name">Admin</div>
+          <div class="rc-desc">Manage platform users and bookings</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goStep(2)"><span class="btn-text">Continue →</span><span class="btn-loader"><div class="spinner"></div></span></button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Details -->
+    <div id="step2" class="step-form" style="display:none">
+      <div class="form-header">
+        <div class="step-indicator">Step 2 of 3</div>
+        <div class="form-title">Your Details</div>
+        <div class="form-sub">Fill in your personal information</div>
+      </div>
+      <div class="fields-grid">
+        <div class="field">
+          <label class="field-label">First Name</label>
+          <div class="field-wrap">
+            <span class="field-icon">👤</span>
+            <input class="field-input" id="firstName" placeholder="Keshav" oninput="clearErr('firstName')"/>
+          </div>
+          <div class="error-msg" id="firstName-err">Required</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Last Name</label>
+          <div class="field-wrap">
+            <span class="field-icon">👤</span>
+            <input class="field-input" id="lastName" placeholder="Sharma"/>
+          </div>
+        </div>
+        <div class="field full">
+          <label class="field-label">Email Address</label>
+          <div class="field-wrap">
+            <span class="field-icon">📧</span>
+            <input class="field-input" id="email" type="email" placeholder="keshav@example.com" oninput="clearErr('email')"/>
+          </div>
+          <div class="error-msg" id="email-err">Enter a valid email address</div>
+        </div>
+        <div class="field full">
+          <label class="field-label">Phone Number</label>
+          <div class="field-wrap">
+            <span class="field-icon">📱</span>
+            <input class="field-input" id="phone" placeholder="+91 98765 43210" oninput="clearErr('phone')"/>
+          </div>
+          <div class="error-msg" id="phone-err">Enter a valid phone number</div>
+        </div>
+        <div class="field full">
+          <label class="field-label">Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔑</span>
+            <input class="field-input" id="password" type="password" placeholder="Min. 8 characters" oninput="checkStrength(); clearErr('password')"/>
+            <span class="toggle-pw" onclick="togglePw('password',this)">👁</span>
+          </div>
+          <div class="pw-strength">
+            <div class="pw-bars"><div class="pw-bar" id="bar1"></div><div class="pw-bar" id="bar2"></div><div class="pw-bar" id="bar3"></div><div class="pw-bar" id="bar4"></div></div>
+            <div class="pw-label" id="pwLabel">Enter a password</div>
+          </div>
+          <div class="error-msg" id="password-err">Min. 8 characters required</div>
+        </div>
+        <div class="field full">
+          <label class="field-label">Confirm Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔒</span>
+            <input class="field-input" id="confirm" type="password" placeholder="Repeat your password" oninput="clearErr('confirm')"/>
+            <span class="toggle-pw" onclick="togglePw('confirm',this)">👁</span>
+          </div>
+          <div class="error-msg" id="confirm-err">Passwords do not match</div>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(3)"><span class="btn-text">Continue →</span><span class="btn-loader"><div class="spinner"></div></span></button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Confirm -->
+    <div id="step3" class="step-form" style="display:none">
+      <div class="form-header">
+        <div class="step-indicator">Step 3 of 3</div>
+        <div class="form-title">Almost there!</div>
+        <div class="form-sub">Review your details and create your account</div>
+      </div>
+
+      <!-- Summary -->
+      <div style="background:var(--input-bg);border:1.5px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px">
+        <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">Account Summary</div>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;justify-content:space-between;font-size:.85rem"><span style="color:var(--muted)">Name</span><strong id="sum-name">—</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.85rem"><span style="color:var(--muted)">Email</span><strong id="sum-email">—</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.85rem"><span style="color:var(--muted)">Phone</span><strong id="sum-phone">—</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.85rem"><span style="color:var(--muted)">Role</span><strong id="sum-role" style="color:var(--accent)">—</strong></div>
+        </div>
+      </div>
+
+      <div class="terms-row">
+        <input type="checkbox" class="terms-check" id="terms"/>
+        <div class="terms-text">I agree to the <a href="#">Terms of Service</a>, <a href="#">Privacy Policy</a>, and consent to receive service updates.</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" id="submitBtn" onclick="handleRegister()">
+          <span class="btn-text">Create Account 🚀</span>
+          <span class="btn-loader"><div class="spinner"></div></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">Account Created!</div>
+      <div class="success-sub">Welcome to ServiceMate, <strong id="successName"></strong>!<br>Your account has been successfully created.</div>
+      <a href="login.html" style="display:inline-block">
+        <button class="btn btn-primary" style="padding:13px 36px;">Sign In Now →</button>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentStep = 1;
+  let selectedRole = 'CUSTOMER';
+
+  function pickRole(el, role) {
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedRole = role;
+  }
+
+  function goStep(n) {
+    if (n > currentStep && !validateStep(currentStep)) return;
+    if (n === 3) fillSummary();
+
+    document.getElementById('step' + currentStep).style.display = 'none';
+    document.getElementById('step' + n).style.display = 'block';
+    document.getElementById('alertBox').classList.remove('show');
+    currentStep = n;
+    updateStepUI();
+  }
+
+  function updateStepUI() {
+    for (let i = 1; i <= 3; i++) {
+      const dot = document.getElementById('dot' + i);
+      const lbl = document.getElementById('lbl' + i);
+      const conn = document.getElementById('conn' + i);
+      dot.className = 'step-dot ' + (i < currentStep ? 'done' : i === currentStep ? 'active' : 'pending');
+      dot.textContent = i < currentStep ? '✓' : i;
+      lbl.className = 'step-label ' + (i < currentStep ? 'done' : i === currentStep ? 'active' : 'pending');
+      if (conn) conn.className = 'step-connector ' + (i < currentStep ? 'done' : 'pending');
+    }
+  }
+
+  function validateStep(s) {
+    if (s === 1) return true;
+    if (s === 2) {
+      let ok = true;
+      const first = document.getElementById('firstName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const pass = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm').value;
+      if (!first) { showErr('firstName', 'Required'); ok = false; }
+      if (!email || !/\S+@\S+\.\S+/.test(email)) { showErr('email', 'Enter a valid email'); ok = false; }
+      if (!phone) { showErr('phone', 'Required'); ok = false; }
+      if (pass.length < 8) { showErr('password', 'Min. 8 characters required'); ok = false; }
+      if (pass !== confirm) { showErr('confirm', 'Passwords do not match'); ok = false; }
+      return ok;
+    }
+    return true;
+  }
+
+  function showErr(id, msg) {
+    document.getElementById(id).classList.add('error');
+    const el = document.getElementById(id + '-err');
+    if (el) { el.textContent = msg; el.classList.add('show'); }
+  }
+
+  function clearErr(id) {
+    document.getElementById(id).classList.remove('error');
+    const el = document.getElementById(id + '-err');
+    if (el) el.classList.remove('show');
+  }
+
+  function fillSummary() {
+    const first = document.getElementById('firstName').value.trim();
+    const last = document.getElementById('lastName').value.trim();
+    document.getElementById('sum-name').textContent = first + (last ? ' ' + last : '');
+    document.getElementById('sum-email').textContent = document.getElementById('email').value.trim();
+    document.getElementById('sum-phone').textContent = document.getElementById('phone').value.trim();
+    document.getElementById('sum-role').textContent = selectedRole;
+  }
+
+  function checkStrength() {
+    const pass = document.getElementById('password').value;
+    const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
+    const lbl = document.getElementById('pwLabel');
+    bars.forEach(b => { b.className = 'pw-bar'; });
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+    const cls = score <= 1 ? 'weak' : score <= 2 ? 'fair' : 'strong';
+    const labels = { weak:'Weak', fair:'Fair', strong: score === 4 ? 'Very Strong' : 'Strong' };
+    for (let i = 0; i < score; i++) bars[i].classList.add(cls);
+    lbl.textContent = pass.length === 0 ? 'Enter a password' : labels[cls] || 'Good';
+    lbl.style.color = cls === 'weak' ? '#f87171' : cls === 'fair' ? '#f59e0b' : '#34d399';
+  }
+
+  function togglePw(id, icon) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    icon.textContent = inp.type === 'password' ? '👁' : '🙈';
+  }
+
+  function handleRegister() {
+    if (!document.getElementById('terms').checked) {
+      const box = document.getElementById('alertBox');
+      box.className = 'alert alert-error show';
+      document.getElementById('alertIcon').textContent = '⚠️';
+      document.getElementById('alertMsg').textContent = 'Please accept the Terms of Service to continue.';
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+
+    const first = document.getElementById('firstName').value.trim();
+    const last = document.getElementById('lastName').value.trim();
+
+    const body = {
+      name: first + (last ? ' ' + last : ''),
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value,
+      role: selectedRole
+    };
+
+    fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Registration failed');
+      return res.text();
+    })
+    .then(() => {
+      btn.classList.remove('loading');
+      document.getElementById('step3').style.display = 'none';
+      document.getElementById('successName').textContent = first;
+      document.getElementById('successScreen').classList.add('show');
+    })
+    .catch(err => {
+      btn.classList.remove('loading');
+      const box = document.getElementById('alertBox');
+      box.className = 'alert alert-error show';
+      document.getElementById('alertIcon').textContent = '⚠️';
+      document.getElementById('alertMsg').textContent = 'Registration failed. Email may already be in use.';
+    });
+  }
+</script>
+<script src="http://localhost:8080/socket.io/socket.io.js"></script>
+<script src="api.js"></script>
+</body>
+</html>

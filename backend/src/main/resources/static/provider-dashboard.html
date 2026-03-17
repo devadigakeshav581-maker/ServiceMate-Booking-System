@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ServiceMate – Provider Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f5f7ff;
+    --surface: #ffffff;
+    --surface2: #f0f2ff;
+    --accent: #4f46e5;
+    --accent2: #06b6d4;
+    --accent3: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #1a1a2e;
+    --muted: #64748b;
+    --border: #e2e8f0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; }
+
+  .sidebar {
+    width:240px; min-height:100vh; background:var(--accent);
+    display:flex; flex-direction:column; padding:28px 0;
+    position:fixed; top:0; left:0; z-index:10;
+  }
+  .logo { padding:0 24px 32px; font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; color:#fff; }
+  .logo span { color:#a5b4fc; }
+  .nav-label { font-size:.62rem; font-weight:600; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:2px; padding:6px 24px; }
+  .nav-item {
+    display:flex; align-items:center; gap:12px; padding:11px 24px;
+    color:rgba(255,255,255,.6); cursor:pointer; transition:.2s; font-size:.88rem;
+    border-left:3px solid transparent;
+  }
+  .nav-item:hover { color:#fff; background:rgba(255,255,255,.1); }
+  .nav-item.active { color:#fff; border-left-color:#a5b4fc; background:rgba(255,255,255,.15); }
+  .sidebar-footer { margin-top:auto; padding:24px; }
+  .user-chip { display:flex; align-items:center; gap:10px; }
+  .avatar { width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:#fff; }
+  .user-info strong { display:block; font-size:.82rem; color:#fff; }
+  .user-info span { font-size:.7rem; color:rgba(255,255,255,.5); }
+
+  .main { margin-left:240px; flex:1; padding:36px 40px; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; }
+  .page-title { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; }
+  .btn { padding:9px 20px; border-radius:10px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:500; transition:.2s; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:#3730a3; }
+  .btn-sm { padding:5px 12px; border-radius:8px; font-size:.75rem; font-weight:600; border:none; cursor:pointer; }
+  .btn-confirm { background:rgba(79,70,229,.1); color:var(--accent); }
+  .btn-confirm:hover { background:var(--accent); color:#fff; }
+  .btn-complete { background:rgba(16,185,129,.1); color:var(--accent3); }
+  .btn-complete:hover { background:var(--accent3); color:#fff; }
+
+  /* Stats */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; transition:.2s; }
+  .stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(79,70,229,.1); }
+  .stat-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+  .stat-icon { width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem; }
+  .si1 { background:rgba(79,70,229,.1); }
+  .si2 { background:rgba(245,158,11,.1); }
+  .si3 { background:rgba(16,185,129,.1); }
+  .si4 { background:rgba(6,182,212,.1); }
+  .stat-value { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; }
+  .stat-label { font-size:.75rem; color:var(--muted); margin-top:2px; }
+  .stat-change { font-size:.72rem; font-weight:600; }
+  .change-up { color:var(--accent3); }
+  .change-down { color:var(--danger); }
+
+  /* Content */
+  .content-grid { display:grid; grid-template-columns:1fr 300px; gap:24px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; }
+  .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .card-title { font-family:'Syne',sans-serif; font-weight:700; }
+
+  /* Bookings Table */
+  .booking-table { width:100%; border-collapse:collapse; }
+  .booking-table th { text-align:left; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; padding:8px 12px; border-bottom:1px solid var(--border); }
+  .booking-table td { padding:12px; border-bottom:1px solid var(--border); font-size:.85rem; }
+  .booking-table tr:last-child td { border-bottom:none; }
+  .booking-table tr:hover td { background:var(--surface2); }
+  .status-pill { padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:600; }
+  .s-pending { background:rgba(245,158,11,.1); color:var(--warn); }
+  .s-confirmed { background:rgba(79,70,229,.1); color:var(--accent); }
+  .s-completed { background:rgba(16,185,129,.1); color:var(--accent3); }
+  .s-cancelled { background:rgba(239,68,68,.1); color:var(--danger); }
+  .actions { display:flex; gap:6px; }
+
+  /* Earnings Chart placeholder */
+  .chart-area { height:140px; background:linear-gradient(135deg,rgba(79,70,229,.05),rgba(6,182,212,.05)); border-radius:12px; display:flex; align-items:flex-end; padding:16px; gap:6px; }
+  .bar { flex:1; background:var(--accent); border-radius:4px 4px 0 0; opacity:.7; transition:.3s; }
+  .bar:hover { opacity:1; }
+
+  /* Service Cards */
+  .my-services { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .service-row { display:flex; align-items:center; gap:12px; padding:12px; background:var(--surface2); border-radius:12px; }
+  .service-emoji { font-size:1.4rem; width:36px; text-align:center; }
+  .service-info { flex:1; }
+  .service-info strong { font-size:.88rem; display:block; }
+  .service-info span { font-size:.72rem; color:var(--muted); }
+  .service-price-tag { font-family:'Syne',sans-serif; font-weight:700; color:var(--accent); font-size:.95rem; }
+
+  .earnings-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:.82rem; }
+  .earnings-row:last-child { border-bottom:none; }
+  .earnings-label { color:var(--muted); }
+  .earnings-value { font-weight:600; font-family:'Syne',sans-serif; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+  .stat-card { animation:fadeIn .4s ease both; }
+  .stat-card:nth-child(1){animation-delay:.05s}
+  .stat-card:nth-child(2){animation-delay:.1s}
+  .stat-card:nth-child(3){animation-delay:.15s}
+  .stat-card:nth-child(4){animation-delay:.2s}
+
+  .toast { position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:12px;font-weight:600;font-size:.85rem;z-index:999;display:none;animation:fadeIn .3s ease; }
+  .toast.success { background:var(--accent3); color:#fff; }
+  .toast.info { background:var(--accent); color:#fff; }
+
+  /* Modal Styles */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--surface); padding:24px; border-radius:16px; width:400px; max-width:90%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); animation:fadeIn 0.2s ease-out; }
+  .modal h3 { font-family:'Syne',sans-serif; margin-bottom:16px; font-size:1.2rem; }
+  .form-group { margin-bottom:12px; }
+  .form-group label { display:block; font-size:0.75rem; margin-bottom:4px; color:var(--muted); }
+  .form-group input, .form-group select { width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); outline:none; }
+  .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">Service<span>Mate</span></div>
+  <nav>
+    <div class="nav-label">Menu</div>
+    <div class="nav-item active"><span>🏠</span> Dashboard</div>
+    <div class="nav-item"><span>📅</span> Bookings</div>
+    <div class="nav-item"><span>🔧</span> My Services</div>
+    <div class="nav-item"><span>💰</span> Earnings</div>
+    <div class="nav-item"><span>⭐</span> Reviews</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="avatar">R</div>
+      <div class="user-info"><strong>Ravi Kumar</strong><span>Service Provider</span></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="page-title">Provider Dashboard</div>
+    <button class="btn btn-primary" onclick="openServiceModal()">+ Add Service</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon si1">📅</div><span class="stat-change change-up">+3 today</span></div><div class="stat-value">24</div><div class="stat-label">Total Bookings</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon si2">⏳</div><span class="stat-change change-down">2 urgent</span></div><div class="stat-value">5</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon si3">✅</div><span class="stat-change change-up">↑ 18%</span></div><div class="stat-value">18</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon si4">💰</div><span class="stat-change change-up">↑ 22%</span></div><div class="stat-value">₹12k</div><div class="stat-label">This Month</div></div>
+  </div>
+
+  <div class="content-grid">
+    <div>
+      <!-- Bookings Table -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-title">Incoming Bookings</div>
+          <select style="background:var(--surface2);border:1px solid var(--border);padding:5px 10px;border-radius:8px;font-size:.8rem;color:var(--text)">
+            <option>All Status</option><option>Pending</option><option>Confirmed</option>
+          </select>
+        </div>
+        <table class="booking-table">
+          <thead>
+            <tr><th>Customer</th><th>Service</th><th>Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Keshav</strong><br><span style="font-size:.72rem;color:var(--muted)">123 MG Road</span></td>
+              <td>🔧 Plumbing</td>
+              <td>Today 10:00 AM</td>
+              <td><strong>₹499</strong></td>
+              <td><span class="status-pill s-pending">Pending</span></td>
+              <td><div class="actions"><button class="btn-sm btn-confirm" onclick="updateStatus(this,'Confirmed')">Confirm</button></div></td>
+            </tr>
+            <tr>
+              <td><strong>Priya</strong><br><span style="font-size:.72rem;color:var(--muted)">456 Koramangala</span></td>
+              <td>🧹 Cleaning</td>
+              <td>Tomorrow 9:00 AM</td>
+              <td><strong>₹999</strong></td>
+              <td><span class="status-pill s-confirmed">Confirmed</span></td>
+              <td><div class="actions"><button class="btn-sm btn-complete" onclick="updateStatus(this,'Completed')">Complete</button></div></td>
+            </tr>
+            <tr>
+              <td><strong>Arjun</strong><br><span style="font-size:.72rem;color:var(--muted)">789 Whitefield</span></td>
+              <td>⚡ Electrical</td>
+              <td>Mar 5, 2:00 PM</td>
+              <td><strong>₹749</strong></td>
+              <td><span class="status-pill s-confirmed">Confirmed</span></td>
+              <td><div class="actions"><button class="btn-sm btn-complete" onclick="updateStatus(this,'Completed')">Complete</button></div></td>
+            </tr>
+            <tr>
+              <td><strong>Sneha</strong><br><span style="font-size:.72rem;color:var(--muted)">321 HSR Layout</span></td>
+              <td>❄️ AC Repair</td>
+              <td>Mar 3, 11:00 AM</td>
+              <td><strong>₹599</strong></td>
+              <td><span class="status-pill s-completed">Completed</span></td>
+              <td><span style="font-size:.75rem;color:var(--muted)">Done</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Earnings Chart -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Earnings – Last 7 Days</div></div>
+        <div class="chart-area">
+          <div class="bar" style="height:40%" title="₹800"></div>
+          <div class="bar" style="height:65%" title="₹1300"></div>
+          <div class="bar" style="height:45%" title="₹900"></div>
+          <div class="bar" style="height:80%" title="₹1600"></div>
+          <div class="bar" style="height:55%" title="₹1100"></div>
+          <div class="bar" style="height:90%" title="₹1800"></div>
+          <div class="bar" style="height:70%;background:var(--accent2)" title="₹1400"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.72rem;color:var(--muted);padding:0 4px">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">My Services</div></div>
+        <div class="my-services" id="myServicesContainer"></div>
+        <button class="btn btn-primary" onclick="openServiceModal()" style="width:100%;font-size:.82rem">+ Add New Service</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Earnings Summary</div></div>
+        <div class="earnings-row"><span class="earnings-label">Today</span><span class="earnings-value">₹1,248</span></div>
+        <div class="earnings-row"><span class="earnings-label">This Week</span><span class="earnings-value">₹7,890</span></div>
+        <div class="earnings-row"><span class="earnings-label">This Month</span><span class="earnings-value">₹12,340</span></div>
+        <div class="earnings-row"><span class="earnings-label">All Time</span><span class="earnings-value">₹48,600</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Add Service Modal -->
+<div class="modal-overlay" id="serviceModal">
+  <div class="modal">
+    <h3>Add New Service</h3>
+    <div class="form-group">
+      <label>Service Name</label>
+      <input type="text" id="sName" placeholder="e.g. Home Cleaning">
+    </div>
+    <div class="form-group">
+      <label>Price (₹)</label>
+      <input type="number" id="sPrice" placeholder="499">
+    </div>
+    <div class="form-group">
+      <label>Icon / Emoji</label>
+      <input type="text" id="sEmoji" placeholder="🧹">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" style="background:transparent;border:1px solid var(--border)" onclick="closeServiceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="handleAddService()">Create Service</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Service Modal -->
+<div class="modal-overlay" id="editServiceModal">
+  <div class="modal">
+    <h3>Edit Service</h3>
+    <input type="hidden" id="editServiceId">
+    <div class="form-group">
+      <label>Service Name</label>
+      <input type="text" id="editSName" placeholder="e.g. Home Cleaning">
+    </div>
+    <div class="form-group">
+      <label>Price (₹)</label>
+      <input type="number" id="editSPrice" placeholder="499">
+    </div>
+    <div class="form-group">
+      <label>Icon / Emoji</label>
+      <input type="text" id="editSEmoji" placeholder="🧹">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" style="background:transparent;border:1px solid var(--border)" onclick="closeEditServiceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="handleUpdateService()">Update Service</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let myServices = [];
+
+  function updateStatus(btn, status) {
+    const row = btn.closest('tr');
+    const pill = row.querySelector('.status-pill');
+    pill.className = 'status-pill';
+    if(status === 'Confirmed') { pill.classList.add('s-confirmed'); pill.textContent = 'Confirmed'; btn.closest('.actions').innerHTML = '<button class="btn-sm btn-complete" onclick="updateStatus(this,\'Completed\')">Complete</button>'; }
+    else if(status === 'Completed') { pill.classList.add('s-completed'); pill.textContent = 'Completed'; btn.closest('.actions').innerHTML = '<span style="font-size:.75rem;color:var(--muted)">Done</span>'; }
+    showToast(status === 'Confirmed' ? '✅ Booking confirmed!' : '🎉 Booking completed!', status === 'Completed' ? 'success' : 'info');
+  }
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast ' + type; t.style.display='block';
+    setTimeout(() => t.style.display='none', 3000);
+  }
+
+  // Modal Logic
+  function openServiceModal() { document.getElementById('serviceModal').classList.add('show'); }
+  function closeServiceModal() { document.getElementById('serviceModal').classList.remove('show'); }
+  
+  async function handleAddService() {
+    const name = document.getElementById('sName').value;
+    const price = document.getElementById('sPrice').value;
+    const emoji = document.getElementById('sEmoji').value || '🔧';
+    
+    if(!name || !price) return showToast('Please fill all fields', 'info');
+
+    try {
+      await ServiceAPI.create({
+        name: name,
+        price: parseFloat(price),
+        providerId: getUserId(), // from api.js helper
+        description: emoji + ' ' + name // Simple description
+      });
+      showToast('Service created successfully!', 'success');
+      closeServiceModal();
+      loadMyServices(); // Refresh the list without a full page reload
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to create service', 'info');
+    }
+  }
+
+  async function loadMyServices() {
+    const providerId = getUserId();
+    if (!providerId) return;
+
+    try {
+      myServices = await ServiceAPI.getByProvider(providerId);
+      const container = document.getElementById('myServicesContainer');
+      container.innerHTML = '';
+
+      if (myServices.length === 0) {
+        container.innerHTML = '<p style="font-size:.8rem;color:var(--muted);text-align:center;padding:10px 0;">You have not added any services yet.</p>';
+        return;
+      }
+
+      myServices.forEach(service => {
+        const emoji = service.description ? UI.escapeHtml(service.description.split(' ')[0]) : '🔧';
+        container.innerHTML += `
+          <div class="service-row" id="service-row-${service.id}">
+            <div class="service-emoji">${emoji}</div>
+            <div class="service-info"><strong>${UI.escapeHtml(service.name)}</strong><span>Active · 0 bookings</span></div>
+            <div class="service-price-tag">₹${service.price}</div>
+            <div style="display:flex; gap:6px; margin-left:auto;">
+              <button class="btn-sm" style="background:rgba(79,70,229,.1);color:var(--accent);" onclick="openEditServiceModal(${service.id})">Edit</button>
+              <button class="btn-sm" style="background:rgba(239,68,68,.1);color:var(--danger);" onclick="handleDeleteService(${service.id})">Delete</button>
+            </div>
+          </div>`;
+      });
+    } catch (err) {
+      showToast('Could not load your services.', 'info');
+    }
+  }
+
+  function openEditServiceModal(serviceId) {
+    const service = myServices.find(s => s.id === serviceId);
+    if (!service) return;
+
+    document.getElementById('editServiceId').value = service.id;
+    document.getElementById('editSName').value = service.name;
+    document.getElementById('editSPrice').value = service.price;
+    const emoji = service.description ? service.description.split(' ')[0] : '🔧';
+    document.getElementById('editSEmoji').value = emoji;
+
+    document.getElementById('editServiceModal').classList.add('show');
+  }
+
+  function closeEditServiceModal() {
+    document.getElementById('editServiceModal').classList.remove('show');
+  }
+
+  async function handleUpdateService() {
+    const serviceId = document.getElementById('editServiceId').value;
+    const name = document.getElementById('editSName').value;
+    const price = document.getElementById('editSPrice').value;
+    const emoji = document.getElementById('editSEmoji').value || '🔧';
+
+    if (!name || !price) return showToast('Please fill all fields', 'info');
+
+    try {
+      await ServiceAPI.update(serviceId, { name: name, price: parseFloat(price), description: emoji + ' ' + name });
+      showToast('Service updated successfully!', 'success');
+      closeEditServiceModal();
+      loadMyServices(); // Refresh list
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to update service', 'info');
+    }
+  }
+
+  async function handleDeleteService(serviceId) {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    await ServiceAPI.delete(serviceId);
+    showToast('Service deleted!', 'success');
+    loadMyServices(); // Refresh the list
+  }
+
+  // initialize authentication and real-time updates
+  document.addEventListener('DOMContentLoaded', () => {
+    UI.requireAuth();
+    Socket.connect();
+    Socket.onMessage(msg => {
+      if (msg.type && msg.type.startsWith('BOOKING_')) {
+        showToast(`Live: ${msg.type}`, 'info');
+        // refresh bookings if relevant to this provider/service
+        loadProviderBookings(1); // TODO: replace with actual serviceId from session
+      }
+    });
+    loadMyServices();
+  });
+</script>
+<script src="http://localhost:8080/socket.io/socket.io.js"></script>
+<script src="api.js"></script>
+</body>
+</html>

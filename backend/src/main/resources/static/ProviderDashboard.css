@@ -1,0 +1,90 @@
+:root {
+  --bg: #f5f7ff;
+  --surface: #ffffff;
+  --surface2: #f0f2ff;
+  --accent: #4f46e5;
+  --accent2: #06b6d4;
+  --accent3: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --text: #1a1a2e;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+
+.dashboard-container.provider-theme { background:var(--bg); color:var(--text); }
+.provider-theme .sidebar { background:var(--accent); border-right: none; }
+.provider-theme .logo { color: #fff; }
+.provider-theme .logo span { color: #a5b4fc; }
+.provider-theme .nav-label { color: rgba(255,255,255,.4); }
+.provider-theme .nav-item { color: rgba(255,255,255,.6); }
+.provider-theme .nav-item:hover { color:#fff; background:rgba(255,255,255,.1); }
+.provider-theme .nav-item.active { color:#fff; border-left-color:#a5b4fc; background:rgba(255,255,255,.15); }
+.provider-theme .user-info strong { color: #fff; }
+.provider-theme .user-info span { color: rgba(255,255,255,.5); }
+.provider-theme .avatar { background: rgba(255,255,255,.2); color: #fff; }
+
+.btn-sm { padding:5px 12px; border-radius:8px; font-size:.75rem; font-weight:600; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.btn-confirm { background:rgba(79,70,229,.1); color:var(--accent); }
+.btn-confirm:hover { background:var(--accent); color:#fff; }
+.btn-complete { background:rgba(16,185,129,.1); color:var(--accent3); }
+.btn-complete:hover { background:var(--accent3); color:#fff; }
+
+/* Stats */
+.stat-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.stat-icon { width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem; }
+.si1 { background:rgba(79,70,229,.1); }
+.si2 { background:rgba(245,158,11,.1); }
+.si3 { background:rgba(16,185,129,.1); }
+.si4 { background:rgba(6,182,212,.1); }
+.change-up { color:var(--accent3); }
+.change-down { color:var(--danger); }
+
+/* Bookings Table */
+.booking-table { width:100%; border-collapse:collapse; }
+.booking-table th { text-align:left; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; padding:8px 12px; border-bottom:1px solid var(--border); }
+.booking-table td { padding:12px; border-bottom:1px solid var(--border); font-size:.85rem; vertical-align: middle; }
+.booking-table tr:last-child td { border-bottom:none; }
+.booking-table tr:hover td { background:var(--surface2); }
+
+.s-pending { background:rgba(245,158,11,.1); color:var(--warn); }
+.s-confirmed { background:rgba(79,70,229,.1); color:var(--accent); }
+.s-completed { background:rgba(16,185,129,.1); color:var(--accent3); }
+.s-cancelled { background:rgba(239,68,68,.1); color:var(--danger); }
+.actions { display:flex; gap:6px; }
+
+/* Earnings Chart placeholder */
+.chart-area { height:140px; background:linear-gradient(135deg,rgba(79,70,229,.05),rgba(6,182,212,.05)); border-radius:12px; display:flex; align-items:flex-end; padding:16px; gap:6px; }
+.bar { flex:1; background:var(--accent); border-radius:4px 4px 0 0; opacity:.7; transition:.3s; }
+.bar:hover { opacity:1; }
+
+/* Service Cards */
+.my-services { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+.service-row { display:flex; align-items:center; gap:12px; padding:12px; background:var(--surface2); border-radius:12px; }
+.service-emoji { font-size:1.4rem; width:36px; text-align:center; }
+.service-info { flex:1; }
+.service-info strong { font-size:.88rem; display:block; }
+.service-info span { font-size:.72rem; color:var(--muted); }
+.service-price-tag { font-family:'Syne',sans-serif; font-weight:700; color:var(--accent); font-size:.95rem; }
+
+.earnings-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:.82rem; }
+.earnings-row:last-child { border-bottom:none; }
+.earnings-label { color:var(--muted); }
+.earnings-value { font-weight:600; font-family:'Syne',sans-serif; }
+
+/* Modal Inputs */
+.form-group input, .form-group select { 
+  width:100%; padding:8px 12px; border-radius:8px; 
+  border:1px solid var(--border); background:var(--surface); 
+  color:var(--text); outline:none; font-family: 'DM Sans', sans-serif;
+}
+
+/* Modal animation override for React conditional rendering */
+.modal-overlay {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
