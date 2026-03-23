@@ -40,7 +40,7 @@ const ProviderDashboard = () => {
 
     // Set up WebSocket for real-time updates
     useEffect(() => {
-        const socket = io();
+        const socket = io('http://localhost:8080');
 
         // A new booking was created and might be assigned to this provider
         socket.on('booking_created', (newBooking) => {
@@ -58,12 +58,6 @@ const ProviderDashboard = () => {
             socket.disconnect();
         };
     }, [fetchProviderBookings]);
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        navigate('/login');
-    };
 
     const requestComplete = (bookingId) => {
         setConfirmDialog(bookingId);
@@ -97,40 +91,40 @@ const ProviderDashboard = () => {
     const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
 
     if (loading) {
-        return <div className="dashboard-loading">Loading provider dashboard...</div>;
+        return <div className="text-center p-10 text-gray-500">Loading provider dashboard...</div>;
     }
 
     if (error) {
         return (
-            <div className="dashboard-error">
-                <p className="form-error">{error}</p>
-                <button onClick={() => window.location.reload()} className="btn btn-primary">Retry</button>
-                <br /><br />
-                <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center">
+                <p className="font-bold mb-2">{error}</p>
+                <button onClick={() => window.location.reload()} className="bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Retry</button>
             </div>
         );
     }
 
     return (
-        <div className="dashboard-container" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h1>Provider Dashboard</h1>
-                <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-gray-800">Provider Dashboard</h1>
+                <div className="flex gap-4">
+                    <button onClick={() => navigate('/provider/services')} className="bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Manage Services</button>
+                </div>
             </div>
 
             <section className="bookings-section">
-                <h2>Assigned Bookings</h2>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Assigned Bookings</h2>
 
                 {/* Filter Controls */}
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ marginRight: '10px', fontWeight: 'bold' }}>Filter by Status:</label>
+                <div className="mb-4">
+                    <label className="mr-2 font-semibold text-gray-700">Filter by Status:</label>
                     <select 
                         value={statusFilter} 
                         onChange={(e) => {
                             setStatusFilter(e.target.value);
                             setCurrentPage(1); // Reset to first page when filter changes
                         }}
-                        style={{ padding: '5px', borderRadius: '4px' }}
+                        className="p-2 border border-gray-300 rounded-md"
                     >
                         <option value="ALL">All Bookings</option>
                         <option value="PENDING">Pending</option>
@@ -141,37 +135,37 @@ const ProviderDashboard = () => {
                 </div>
 
                 {filteredBookings.length === 0 ? (
-                    <p>You have no assigned bookings at the moment.</p>
+                    <p className="text-gray-500">You have no assigned bookings at the moment.</p>
                 ) : (
-                    <table border="1" cellPadding="10" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table className="w-full text-left border-collapse">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Customer Name</th>
-                                <th>Address</th>
-                                <th>Service</th>
-                                <th>Date</th>
-                                <th>Status</th>
-                                <th>Action</th>
+                                <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">ID</th>
+                                <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Customer Name</th>
+                                <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Address</th>
+                                <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Service</th>
+                                <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Date</th>
+                                <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Status</th>
+                                <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {currentItems.map((booking) => (
                                 <tr key={booking.id}>
-                                    <td>{booking.id}</td>
-                                    <td>{booking.customerName || 'N/A'}</td>
-                                    <td>{booking.address || 'N/A'}</td>
-                                    <td>{booking.serviceName}</td>
-                                    <td>{new Date(booking.bookingDate).toLocaleDateString()}</td>
-                                    <td>{booking.status}</td>
-                                    <td>
+                                    <td className="py-3 px-4 border-b border-gray-200">{booking.id}</td>
+                                    <td className="py-3 px-4 border-b border-gray-200">{booking.customerName || 'N/A'}</td>
+                                    <td className="py-3 px-4 border-b border-gray-200">{booking.address || 'N/A'}</td>
+                                    <td className="py-3 px-4 border-b border-gray-200">{booking.serviceName}</td>
+                                    <td className="py-3 px-4 border-b border-gray-200">{new Date(booking.bookingDate).toLocaleDateString()}</td>
+                                    <td className="py-3 px-4 border-b border-gray-200">{booking.status}</td>
+                                    <td className="py-3 px-4 border-b border-gray-200">
                                         {booking.status !== 'COMPLETED' && booking.status !== 'CANCELLED' ? (
                                             <button 
-                                                onClick={() => requestComplete(booking.id)} className="btn btn-sm btn-success">
+                                                onClick={() => requestComplete(booking.id)} className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600">
                                                 Mark Complete
                                             </button>
                                         ) : (
-                                            <span style={{ color: '#666', fontSize: '0.9em' }}>No actions</span>
+                                            <span className="text-gray-500 text-sm">No actions</span>
                                         )}
                                     </td>
                                 </tr>

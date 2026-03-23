@@ -2,6 +2,7 @@ package com.servicemate.controller;
 
 import com.servicemate.dto.*;
 import com.servicemate.service.PaymentService;
+import com.servicemate.repository.model.Payment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -40,7 +41,7 @@ public class PaymentController {
 
     @Operation(summary = "Get all payments for a customer (Admin)", description = "Requires ADMIN role.")
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<PaymentResponse>> getPaymentsByCustomer(@PathVariable Long customerId) {
+    public ResponseEntity<List<Payment>> getPaymentsByCustomer(@PathVariable Long customerId) {
         // Assumes implementation exists in PaymentService
         return ResponseEntity.ok(paymentService.getPaymentsByCustomer(customerId));
     }

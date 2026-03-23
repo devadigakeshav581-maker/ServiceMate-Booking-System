@@ -133,9 +133,7 @@ echo.
 
     echo [STEP 3] Initializing Database...
     cd /d "%SCRIPT_DIR%database"
-    set "MYSQL_PWD=!MYSQL_PASS!"
-    mysql -u root < servicemate_schema.sql
-    set "MYSQL_PWD="
+    mysql -u root -p"!MYSQL_PASS!" < servicemate_schema.sql
 
     if !errorLevel! neq 0 (
         echo.
@@ -161,7 +159,7 @@ set "PROPERTIES_FILE=%SCRIPT_DIR%backend\src\main\resources\application.properti
 
 if exist "%PROPERTIES_FILE%" (
     echo Updating database password in application.properties...
-    powershell -Command "$pass=$env:MYSQL_PASS; (Get-Content -Path '%PROPERTIES_FILE%') -replace '^(spring.datasource.password=).*$', ('$1'+$pass) | Set-Content -Path '%PROPERTIES_FILE%'"
+    powershell -Command "$pass=$env:MYSQL_PASS; (Get-Content -Path '%PROPERTIES_FILE%') -replace '^(spring.datasource.password=).*$', ('$1'+$pass) -replace '^(server.ssl.*)', '#$1' | Set-Content -Path '%PROPERTIES_FILE%'"
     echo ✓ Backend configured successfully.
 ) else (
     echo ✗ application.properties not found.
@@ -191,7 +189,7 @@ if !BUILD_SUCCESS! equ 1 (
     echo.
 )
 
-echo [STEP 5] Starting Spring Boot Application...
+echo [STEP 6] Starting Spring Boot Application...
 echo Waiting for backend to start (10-15 seconds)...
 echo.
 echo Once you see "Tomcat started on port(s): 8080" the project is running!
@@ -204,11 +202,15 @@ echo   Provider: provider@servicemate.com / 123456
 echo   Admin:    admin@servicemate.com    / 123456
 echo.
 echo Press ENTER to start the application...
-pause
+pause >nul
 
 if !BUILD_SUCCESS! equ 0 (
     exit /b 1
 )
+
+REM Set dummy email environment variables to prevent startup errors
+set "MAIL_USERNAME=local-dev"
+set "MAIL_PASSWORD=password"
 
 cd /d "%SCRIPT_DIR%backend"
 call mvn spring-boot:run

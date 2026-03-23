@@ -44,25 +44,20 @@ const BookingModal = ({ isOpen, onClose, services, onSubmit }) => {
     };
 
     return (
-        <div className="modal-overlay">
-            <style>
-                {`@keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }`}
-            </style>
-            <div className="modal-content">
-                <h2>Create New Booking</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                <h2 className="text-2xl font-bold mb-4">Create New Booking</h2>
                 <form onSubmit={handleSubmit} noValidate>
-                    {error && <p className="form-error">{error}</p>}
-                    <div className="form-group">
-                        <label htmlFor="serviceId">Service</label>
+                    {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                    <div className="mb-4">
+                        <label htmlFor="serviceId" className="block text-gray-700 text-sm font-bold mb-2">Service</label>
                         <select
                             id="serviceId"
                             name="serviceId"
                             value={bookingData.serviceId}
                             onChange={handleChange}
                             required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="" disabled>Select a service</option>
                             {services.length > 0 ? (
@@ -72,47 +67,40 @@ const BookingModal = ({ isOpen, onClose, services, onSubmit }) => {
                                     </option>
                                 ))
                             ) : (
-                                <option disabled>Loading services...</option>
+                                <option disabled>No services available</option>
                             )}
                         </select>
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="bookingDate">Date</label>
+                    <div className="mb-4">
+                        <label htmlFor="bookingDate" className="block text-gray-700 text-sm font-bold mb-2">Date</label>
                         <input
                             type="date"
                             id="bookingDate"
                             name="bookingDate"
                             value={bookingData.bookingDate}
                             onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                             min={new Date().toISOString().split("T")[0]} // Prevent booking past dates
                         />
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="address">Address</label>
+                    <div className="mb-4">
+                        <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-2">Address</label>
                         <input
                             type="text"
                             id="address"
                             name="address"
                             value={bookingData.address}
                             onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter service address"
                             required
                         />
                     </div>
-                    <div className="modal-actions">
-                        <button type="button" onClick={handleClose} className="btn btn-light" disabled={isSubmitting}>Cancel</button>
-                        <button type="submit" className="btn btn-success" disabled={isSubmitting} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {isSubmitting && (
-                                <div style={{
-                                    width: '16px',
-                                    height: '16px',
-                                    border: '2px solid #fff',
-                                    borderTop: '2px solid transparent',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                }} />
-                            )}
+                    <div className="mt-6 flex justify-end gap-4">
+                        <button type="button" onClick={handleClose} className="py-2 px-4 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 disabled:opacity-50" disabled={isSubmitting}>Cancel</button>
+                        <button type="submit" className="py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2" disabled={isSubmitting}>
+                            {isSubmitting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                             {isSubmitting ? 'Processing...' : 'Confirm Booking'}
                         </button>
                     </div>

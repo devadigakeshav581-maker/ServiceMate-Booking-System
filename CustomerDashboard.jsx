@@ -58,7 +58,7 @@ const CustomerDashboard = () => {
     useEffect(() => {
         // Connect to the socket server. The URL should point to your backend.
         // If frontend and backend are on the same domain, you can omit the URL.
-        const socket = io();
+        const socket = io('http://localhost:8080');
 
         // Listen for an event that signifies a booking has been updated.
         // This event name ('booking_update') should match what your backend emits.
@@ -73,12 +73,6 @@ const CustomerDashboard = () => {
             socket.disconnect();
         };
     }, [fetchBookings]);
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        navigate('/login');
-    };
 
     const handleCancelBooking = async (bookingId) => {
         if (!window.confirm('Are you sure you want to cancel this booking?')) {
@@ -139,71 +133,66 @@ const CustomerDashboard = () => {
     const totalPages = Math.ceil(sortedBookings.length / itemsPerPage);
 
     if (loading) {
-        return <div className="dashboard-loading">Loading your dashboard...</div>;
+        return <div className="text-center p-10 text-gray-500">Loading your dashboard...</div>;
     }
 
     if (error) {
         return (
-            <div className="dashboard-error">
-                <p className="form-error">{error}</p>
-                <button onClick={() => window.location.reload()} className="btn btn-primary">Retry</button>
-                <br /><br />
-                <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center">
+                <p className="font-bold mb-2">{error}</p>
+                <button onClick={() => window.location.reload()} className="bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Retry</button>
             </div>
         );
     }
 
     return (
-        <div className="dashboard-container" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h1>Customer Dashboard</h1>
-                <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
-            </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">Customer Dashboard</h1>
 
             <section className="bookings-section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2>My Bookings</h2>
-                    <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-semibold text-gray-700">My Bookings</h2>
+                    <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition duration-200">
                         Create New Booking
                     </button>
                 </div>
                 {bookings.length === 0 ? (
-                    <p>You have no current bookings.</p>
+                    <p className="text-gray-500">You have no current bookings.</p>
                 ) : (
                     <>
-                        <table border="1" cellPadding="10" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr>
-                                    <th onClick={() => handleSort('id')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('id')} className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200 cursor-pointer">
                                         ID {sortConfig.key === 'id' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                                     </th>
-                                    <th onClick={() => handleSort('serviceName')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('serviceName')} className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200 cursor-pointer">
                                         Service {sortConfig.key === 'serviceName' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                                     </th>
-                                    <th onClick={() => handleSort('bookingDate')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('bookingDate')} className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200 cursor-pointer">
                                         Date {sortConfig.key === 'bookingDate' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                                     </th>
-                                    <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('status')} className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200 cursor-pointer">
                                         Status {sortConfig.key === 'status' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                                     </th>
-                                    <th onClick={() => handleSort('address')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('address')} className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200 cursor-pointer">
                                         Address {sortConfig.key === 'address' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                                     </th>
-                                    <th>Action</th>
+                                    <th className="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {currentItems.map((booking) => (
                                     <tr key={booking.id}>
-                                        <td>{booking.id}</td>
-                                        <td>{booking.serviceName || `Service #${booking.serviceId}`}</td>
-                                        <td>{new Date(booking.bookingDate || Date.now()).toLocaleDateString()}</td>
-                                        <td>{booking.status}</td>
-                                        <td>{booking.address || 'N/A'}</td>
-                                        <td>
+                                        <td className="py-3 px-4 border-b border-gray-200">{booking.id}</td>
+                                        <td className="py-3 px-4 border-b border-gray-200">{booking.serviceName || `Service #${booking.serviceId}`}</td>
+                                        <td className="py-3 px-4 border-b border-gray-200">{new Date(booking.bookingDate || Date.now()).toLocaleDateString()}</td>
+                                        <td className="py-3 px-4 border-b border-gray-200">{booking.status}</td>
+                                        <td className="py-3 px-4 border-b border-gray-200">{booking.address || 'N/A'}</td>
+                                        <td className="py-3 px-4 border-b border-gray-200">
                                             {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
                                                 <button
-                                                    onClick={() => handleCancelBooking(booking.id)} className="btn btn-sm btn-danger"
+                                                    onClick={() => handleCancelBooking(booking.id)} className="bg-red-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-red-600 transition duration-200"
                                                 >
                                                     Cancel
                                                 </button>

@@ -4,6 +4,7 @@ import com.servicemate.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -28,13 +29,16 @@ public class SecurityConfig {
     private final AuthService authService;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("#{'${cors.allowed-origins:*}'.split(',')}")
+    private List<String> allowedOrigins;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors
                 .configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOriginPatterns(List.of("*"));
+                    config.setAllowedOriginPatterns(allowedOrigins);
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
@@ -42,7 +46,12 @@ public class SecurityConfig {
                 }))
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp
-                    .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline' http://localhost:8080; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;")
+                    .policyDirectives("default-src 'self'; " +
+                        "script-src 'self' 'unsafe-inline' http://localhost:8080; " +
+                        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                        "font-src 'self' https://fonts.gstatic.com; " +
+                        "img-src 'self' data:; " +
+                        "object-src 'none'")
                 )
             )
             .csrf(AbstractHttpConfigurer::disable)
@@ -53,6 +62,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**", "/swagger-ui/**", // Swagger/OpenAPI
                     "/", "/*.html", "/*.js", "/*.css", "/*.ico", "/images/**" // Static frontend assets
                 ).permitAll()
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/**").hasAuthority("ADMIN")
                 .requestMatchers("/api/users/**", "/api/admin/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated()
             )
