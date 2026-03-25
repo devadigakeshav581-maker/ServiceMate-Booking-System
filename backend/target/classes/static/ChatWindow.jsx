@@ -1,33 +1,69 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
 import { ChatAPI, getRole, BASE_URL } from './api';
 import { Card } from './Card';
 
 const ChatWindow = ({ booking, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const stompClientRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
   const role = getRole(); // 'CUSTOMER' or 'PROVIDER'
 
   useEffect(() => {
     // Load history
     ChatAPI.getMessages(booking.id).then(setMessages).catch(console.error);
 
-    // Socket connection for real-time messages
-    const socket = io(BASE_URL);
-    socket.on('message', (msg) => {
-      // Only add if it belongs to this booking
-      if (msg.type === 'CHAT_MESSAGE' && msg.message.bookingId === booking.id) {
-        setMessages(prev => {
-          // Prevent duplicates if mock server echoes back quickly
-          if (prev.some(m => m.id === msg.message.id)) return prev;
-          return [...prev, msg.message];
-        });
-      }
+    // STOMP over SockJS connection
+    const socket = new SockJS(`${BASE_URL}/ws`);
+    const stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+    stompClientRef.current = stompClient;
+
+    const token = localStorage.getItem('token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+    stompClient.connect(headers, () => {
+      // Subscribe to general messages for this booking
+      // (Assuming a ChatController broadcasts new messages here)
+      stompClient.subscribe(`/topic/chat/${booking.id}`, (message) => {
+        const newMessage = JSON.parse(message.body);
+        setMessages(prev => [...prev, newMessage]);
+      });
+
+      // Subscribe to typing indicator topic
+      stompClient.subscribe(`/topic/chat/${booking.id}/typing`, (message) => {
+        const { isTyping: remoteIsTyping, sender } = JSON.parse(message.body);
+        const myUsername = localStorage.getItem('email'); // Assuming email is username
+        
+        // Only show typing indicator for the *other* user
+        if (sender !== myUsername) {
+          setIsTyping(remoteIsTyping);
+        }
+      });
     });
 
-    return () => socket.disconnect();
+    return () => {
+      if (stompClientRef.current && stompClientRef.current.connected) {
+        // Stop typing when window is closed
+        stompClientRef.current.send(`/app/chat/${booking.id}/typing`, {}, JSON.stringify({ isTyping: false }));
+        stompClientRef.current.disconnect();
+      }
+    };
   }, [booking.id]);
+
+  const handleTyping = () => {
+    if (stompClientRef.current && stompClientRef.current.connected) {
+        clearTimeout(typingTimeoutRef.current);
+        stompClientRef.current.send(`/app/chat/${booking.id}/typing`, {}, JSON.stringify({ isTyping: true }));
+        typingTimeoutRef.current = setTimeout(() => {
+            stompClientRef.current.send(`/app/chat/${booking.id}/typing`, {}, JSON.stringify({ isTyping: false }));
+        }, 2000); // Consider the user stopped typing after 2 seconds of inactivity
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,11 +72,14 @@ const ChatWindow = ({ booking, onClose }) => {
   const handleSend = async () => {
     if (!inputText.trim()) return;
     try {
+      // This still uses the REST API to persist the message.
+      // The backend should then broadcast it via WebSocket.
       await ChatAPI.sendMessage(booking.id, {
         text: inputText,
         senderRole: role
       });
       setInputText('');
+      stompClientRef.current.send(`/app/chat/${booking.id}/typing`, {}, JSON.stringify({ isTyping: false }));
     } catch (err) {
       console.error("Failed to send", err);
     }
@@ -72,11 +111,18 @@ const ChatWindow = ({ booking, onClose }) => {
               </div>
             );
           })}
+          {isTyping && (
+            <div className="flex justify-start">
+                <div className="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm bg-input-bg border border-border text-muted rounded-bl-none italic">
+                    typing...
+                </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
         <div className="p-4 border-t border-border bg-panel flex gap-2">
-          <input className="flex-1 bg-input-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text outline-none focus:border-accent transition-colors" placeholder="Type a message..." value={inputText} onChange={e => setInputText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} />
+          <input className="flex-1 bg-input-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text outline-none focus:border-accent transition-colors" placeholder="Type a message..." value={inputText} onChange={e => { setInputText(e.target.value); handleTyping(); }} onKeyDown={e => e.key === 'Enter' && handleSend()} />
           <button onClick={handleSend} className="p-2.5 bg-accent text-white rounded-xl hover:bg-blue-600 transition-colors shadow-lg shadow-accent/20 aspect-square flex items-center justify-center">➤</button>
         </div>
       </Card>

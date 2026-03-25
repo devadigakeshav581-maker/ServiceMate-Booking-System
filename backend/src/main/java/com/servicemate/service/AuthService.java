@@ -48,6 +48,9 @@ public class AuthService implements UserDetailsService {
     @Value("${spring.mail.username}")
     private String mailFrom;
 
+    @Autowired
+    private RealTimeService realTimeService;
+
     public String register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email already registered!");
@@ -60,6 +63,9 @@ public class AuthService implements UserDetailsService {
         user.setRole(request.getRole());
         user.setIsVerified(false); // Users must verify email
         userRepository.save(user);
+
+        // Notify admins via WebSocket
+        realTimeService.broadcastActivity(new ActivityDto("NEW_REGISTRATION", "New user registered: " + user.getEmail()));
 
         // Generate Verification Token
         String token = UUID.randomUUID().toString();

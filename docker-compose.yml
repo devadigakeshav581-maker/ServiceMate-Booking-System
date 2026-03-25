@@ -1,52 +1,34 @@
 version: '3.8'
 
 services:
-  # MySQL Database Service
   db:
     image: mysql:8.0
     container_name: servicemate-db
+    environment:
+      MYSQL_DATABASE: servicemate
+      MYSQL_ROOT_PASSWORD: Root@2026
     ports:
       - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD} # Use environment variables
-      MYSQL_DATABASE: servicemate
-    volumes:
-      - ./database/servicemate_schema.sql:/docker-entrypoint-initdb.d/init.sql
-      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-pRoot@2026"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Spring Boot Backend Service
-  backend:
-    build: ./backend
-    container_name: servicemate-backend
-    ports:
-      - "8080:8080"
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: servicemate-app
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      - DB_PASSWORD=${DB_PASSWORD} # Pass password to backend
-      - JWT_SECRET=${JWT_SECRET}   # Pass JWT secret to backend
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/servicemate # Override URL to use Docker networking
-
-  # React Frontend Service
-  frontend:
-    build: ./frontend_react
-    container_name: servicemate-frontend
     ports:
-      - "5173:5173"
-    depends_on:
-      - backend
+      - "8080:8080"
     environment:
-      - VITE_API_URL=http://backend:8080
-    # Mount volume for hot-reloading during development
-    volumes:
-      - ./frontend_react:/app
-      - /app/node_modules
-
-volumes:
-  mysql_data:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/servicemate?allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=Root@2026
+      - SPRING_MAIL_USERNAME=keshavisdevadiga07@gmail.com
+      - SPRING_MAIL_PASSWORD=dwiz cgdc jmjp knfw
+      - JWT_SECRET=your_very_long_and_secure_random_jwt_secret_key_here

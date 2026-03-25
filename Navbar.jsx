@@ -6,10 +6,12 @@ const Navbar = () => {
     
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
+    const name = localStorage.getItem('name');
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
+        localStorage.removeItem('name');
         navigate('/login');
     };
 
@@ -33,6 +35,7 @@ const Navbar = () => {
                                 <Link to="/provider/services" className="ml-5 font-medium hover:text-blue-300">My Services</Link>
                             </>
                         )}
+                        {name && <Link to="/profile" className="ml-5 text-gray-300 hover:text-white">Welcome, {name}</Link>}
                         <button onClick={handleLogout} className="ml-5 py-1 px-4 bg-red-600 rounded hover:bg-red-700">Logout</button>
                     </>
                 )}

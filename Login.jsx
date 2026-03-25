@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from './api';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,6 +7,17 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (token) {
+            // If user is already logged in, redirect to their dashboard
+            if (role === 'PROVIDER') navigate('/provider', { replace: true });
+            else if (role === 'ADMIN') navigate('/admin', { replace: true });
+            else navigate('/customer', { replace: true });
+        }
+    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,12 +30,15 @@ const Login = () => {
                 password 
             });
 
+            console.log("Login Response Data:", response.data);
+
             // Assuming the backend returns { token: "...", role: "CUSTOMER" }
-            const { token, role } = response.data;
+            const { token, role, name } = response.data;
 
             // Store token for future authenticated requests
             localStorage.setItem('token', token);
             localStorage.setItem('role', role);
+            if (name) localStorage.setItem('name', name);
 
             // Redirect based on user role
             if (role === 'PROVIDER') {

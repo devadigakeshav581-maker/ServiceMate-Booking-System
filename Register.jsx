@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from './api';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -7,10 +7,22 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
+        confirmPassword: '',
         role: 'CUSTOMER'
     });
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (token) {
+            // Redirect logged-in users away from the register page
+            if (role === 'PROVIDER') navigate('/provider', { replace: true });
+            else if (role === 'ADMIN') navigate('/admin', { replace: true });
+            else navigate('/customer', { replace: true });
+        }
+    }, [navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -30,9 +42,16 @@ const Register = () => {
             return;
         }
 
+        // Check if passwords match
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+        }
+
         try {
             // POST registration data to backend
-            await api.post('/api/auth/register', formData);
+            const { confirmPassword, ...requestData } = formData;
+            await api.post('/api/auth/register', requestData);
             alert('Registration successful! Please login.');
             navigate('/login');
         } catch (err) {
@@ -74,6 +93,17 @@ const Register = () => {
                         type="password" 
                         name="password"
                         value={formData.password} 
+                        onChange={handleChange} 
+                        required 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Confirm Password:</label>
+                    <input 
+                        type="password" 
+                        name="confirmPassword"
+                        value={formData.confirmPassword} 
                         onChange={handleChange} 
                         required 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { io } from 'socket.io-client';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
 import { ServiceAPI, BookingAPI, PaymentAPI, getUserId, logout, BASE_URL } from './api';
 import { useToast } from './ToastContext';
 import ThemeToggle from './ThemeToggle';
@@ -89,28 +90,41 @@ const CustomerDashboard = () => {
     activeChatBookingRef.current = activeChatBooking;
   }, [activeChatBooking]);
 
-  // Connect to Socket.io
+  // Connect to WebSocket for real-time updates
   useEffect(() => {
-    const socket = io(BASE_URL);
-    
-    socket.on('connect', () => {
-      console.log('Connected to WebSocket');
-    });
+    const socket = new SockJS(`${BASE_URL}/ws`);
+    const stompClient = Stomp.over(socket);
+    stompClient.debug = null;
 
-    // Listen for updates related to bookings
-    socket.on('message', (msg) => {
-      if (msg.type && msg.type.startsWith('BOOKING_')) {
-        refreshBookings();
-        addToast(`Update: ${msg.type.replace('BOOKING_', '').toLowerCase().replace('_', ' ')}`, 'info');
-      } else if (msg.type === 'CHAT_MESSAGE') {
-        const { bookingId } = msg.message;
-        if (activeChatBookingRef.current?.id !== bookingId) {
-          setUnreadCounts(prev => ({ ...prev, [bookingId]: (prev[bookingId] || 0) + 1 }));
+    const token = localStorage.getItem('token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+    stompClient.connect(headers, () => {
+      console.log('Connected to WebSocket via STOMP');
+
+      // Listen for private notifications (for unread messages and status updates)
+      stompClient.subscribe('/user/queue/notifications', (message) => {
+        const notification = JSON.parse(message.body);
+
+        if (notification.type === 'NEW_CHAT_MESSAGE') {
+          const { bookingId } = notification;
+          // Only increment count if the chat window is not currently open for this booking
+          if (activeChatBookingRef.current?.id !== bookingId) {
+            setUnreadCounts(prev => ({ ...prev, [bookingId]: (prev[bookingId] || 0) + 1 }));
+          }
+        } else if (notification.type && notification.type.startsWith('BOOKING_')) {
+          // A booking status was updated by the provider
+          refreshBookings();
+          addToast(notification.message || 'A booking was updated.', 'info');
         }
-      }
-    });
+      });
+    }, (error) => console.error("WebSocket connection error:", error));
 
-    return () => socket.disconnect();
+    return () => {
+      if (stompClient && stompClient.connected) {
+        stompClient.disconnect();
+      }
+    };
   }, [refreshBookings, addToast]);
 
   // Initial Data Load

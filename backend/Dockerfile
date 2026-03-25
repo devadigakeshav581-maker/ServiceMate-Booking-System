@@ -1,15 +1,15 @@
-# Use a base image with Java 17
-FROM openjdk:17-jdk-slim
-
-# Set the working directory inside the container
+# Build stage using Maven
+FROM maven:3.8.4-openjdk-17-slim AS build
+COPY . /app
 WORKDIR /app
+RUN mvn clean package -DskipTests
 
-# Copy the compiled JAR file from the target directory to the container
-# Assumes the JAR file is named servicemate-1.0.0.jar after 'mvn clean install'
-COPY target/servicemate-1.0.0.jar app.jar
+# Run stage using OpenJDK
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=build /app/target/servicemate-1.0.0.jar app.jar
 
-# Expose the port the app runs on
 EXPOSE 8080
 
-# Command to run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run the application with production flags
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]

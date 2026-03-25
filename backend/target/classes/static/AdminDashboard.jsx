@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
 import { AdminAPI, BookingAPI, PaymentAPI, logout, BASE_URL } from './api';
 import { useToast } from './ToastContext';
 import ThemeToggle from './ThemeToggle';
@@ -59,31 +60,49 @@ const AdminDashboard = () => {
   // Real-time Feed
   // ─────────────────────────────────────────────
   useEffect(() => {
-    const socket = io(BASE_URL);
-    socket.on('message', (msg) => {
-      if (msg.type) {
+    const socket = new SockJS(`${BASE_URL}/ws`);
+    const stompClient = Stomp.over(socket);
+    stompClient.debug = null; // Disable console logs
+
+    const token = localStorage.getItem('token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+    stompClient.connect(headers, () => {
+      // Subscribe to the activity feed topic
+      stompClient.subscribe('/topic/admin/activity-feed', (message) => {
+        const activity = JSON.parse(message.body);
+
         const iconMap = {
+          USER_ONLINE: '🟢',
+          USER_OFFLINE: '⚪',
+          NEW_REGISTRATION: '👤',
           BOOKING_CREATED: '📅',
           BOOKING_CONFIRMED: '✅',
           BOOKING_COMPLETED: '🎉',
-          BOOKING_CANCEL: '❌',
-          PAYMENT_RECEIVED: '💳'
+          BOOKING_CANCELLED: '❌',
+          PAYMENT_RECEIVED: '💳',
         };
-        
+
         const newActivity = {
-          id: Date.now(),
-          type: msg.type,
-          text: msg.type.replace('BOOKING_', '').replace('_', ' ').toLowerCase(),
-          icon: iconMap[msg.type] || 'ℹ️',
-          time: 'Just now'
+          id: activity.timestamp, // Use timestamp from backend for unique key
+          type: activity.type,
+          text: activity.message,
+          icon: iconMap[activity.type] || 'ℹ️',
+          time: new Date(activity.timestamp).toLocaleTimeString()
         };
 
         setActivityFeed(prev => [newActivity, ...prev].slice(0, 10));
-        // Optional: refresh stats if relevant
-      }
+      });
+    }, (error) => {
+      console.error("WebSocket Connection Error: ", error);
     });
-    return () => socket.disconnect();
-  }, []);
+
+    return () => {
+      if (stompClient && stompClient.connected) {
+        stompClient.disconnect();
+      }
+    };
+  }, []); // Empty dependency array to run once on mount
 
   // ─────────────────────────────────────────────
   // User Filtering
@@ -321,7 +340,7 @@ const AdminDashboard = () => {
                 <div key={act.id} className="flex gap-3 py-2.5 border-b border-border last:border-0">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 bg-blue-500/10">{act.icon}</div>
                   <div>
-                    <div className="text-sm text-text"><strong className="font-medium">{act.type}</strong> {act.text}</div>
+                    <div className="text-sm text-text">{act.text}</div>
                     <div className="text-[0.7rem] text-muted mt-0.5">{act.time}</div>
                   </div>
                 </div>

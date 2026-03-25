@@ -123,7 +123,7 @@ net start MySQL80
 
 ### Step 2: Initialize Database
 ```powershell
-cd c:\Users\kesha\Downloads\files\database
+cd database
 mysql -u root -p < servicemate_schema.sql
 # When prompted, enter your MySQL root password
 ```

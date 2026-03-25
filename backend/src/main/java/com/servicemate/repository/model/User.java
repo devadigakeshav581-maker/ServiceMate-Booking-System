@@ -2,6 +2,7 @@ package com.servicemate.repository.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "users")
@@ -19,6 +20,7 @@ public class User {
     @Column(unique = true)
     private String email;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     private String phone;
@@ -29,4 +31,7 @@ public class User {
     private Boolean isActive = true;
 
     private Boolean isVerified = false;
+
+    @Column(name = "is_online")
+    private Boolean isOnline = false;
 }
