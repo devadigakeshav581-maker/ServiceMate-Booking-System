@@ -78,17 +78,34 @@
 
 async function handleLogin() {
   const btn = document.getElementById('loginBtn');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  // Enhanced client-side validation
+  if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    UI.toast('Please enter a valid email address.', 'warning');
+    document.getElementById('email').focus();
+    return;
+  }
+
+  // Ensure a role is selected
+  if (!window.selectedRole) {
+    UI.toast('Please select your login role (Customer, Provider, or Admin).', 'warning');
+    return;
+  }
+
   UI.setLoading(btn, true);
+  console.log(`Attempting login for: ${email} as ${window.selectedRole}`);
 
   try {
     const token = await AuthAPI.login({
-      email:    document.getElementById('email').value.trim(),
-      password: document.getElementById('password').value,
-      role:     selectedRole   // 'CUSTOMER' | 'PROVIDER' | 'ADMIN'
+      email:    email,
+      password: password,
+      role:     window.selectedRole   // 'CUSTOMER' | 'PROVIDER' | 'ADMIN'
     });
 
     UI.toast('Login successful! Redirecting...', 'success');
-    setTimeout(() => UI.redirectByRole(selectedRole), 800);
+    setTimeout(() => UI.redirectByRole(window.selectedRole), 800);
 
   } catch (err) {
     UI.toast('Invalid email or password.', 'error');
@@ -103,15 +120,22 @@ async function handleLogin() {
 
 async function handleRegister() {
   const btn = document.getElementById('submitBtn');
+  const email = document.getElementById('email').value.trim();
+
+  if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    UI.toast('Please enter a valid email address.', 'warning');
+    return;
+  }
+
   UI.setLoading(btn, true);
 
   try {
     await AuthAPI.register({
       name:     document.getElementById('firstName').value + ' ' +
                 document.getElementById('lastName').value,
-      email:    document.getElementById('email').value.trim(),
+      email:    email,
       password: document.getElementById('password').value,
-      role:     selectedRole
+      role:     window.selectedRole
     });
 
     // Show success screen
@@ -349,6 +373,12 @@ async function searchBookingsByDate() {
               <td>${UI.formatDate(b.bookingDate)}</td>
               <td>${UI.statusBadge(b.status)}</td>
               <td>
+                ${b.status === 'PENDING'
+                  ? `<button onclick="confirmBooking(${b.id})">Confirm</button>`
+                  : ''}
+                ${b.status === 'CONFIRMED'
+                  ? `<button onclick="completeBooking(${b.id})">Complete</button>`
+                  : ''}
                  <button onclick="checkPaymentStatus(${b.id})">Status</button>
               </td>
             </tr>`;

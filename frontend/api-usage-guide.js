@@ -78,17 +78,34 @@
 
 async function handleLogin() {
   const btn = document.getElementById('loginBtn');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  // Enhanced client-side validation
+  if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    UI.toast('Please enter a valid email address.', 'warning');
+    document.getElementById('email').focus();
+    return;
+  }
+
+  // Ensure a role is selected
+  if (!window.selectedRole) {
+    UI.toast('Please select your login role (Customer, Provider, or Admin).', 'warning');
+    return;
+  }
+
   UI.setLoading(btn, true);
+  console.log(`Attempting login for: ${email} as ${window.selectedRole}`);
 
   try {
     const token = await AuthAPI.login({
-      email:    document.getElementById('email').value.trim(),
-      password: document.getElementById('password').value,
-      role:     selectedRole   // 'CUSTOMER' | 'PROVIDER' | 'ADMIN'
+      email:    email,
+      password: password,
+      role:     window.selectedRole   // 'CUSTOMER' | 'PROVIDER' | 'ADMIN'
     });
 
     UI.toast('Login successful! Redirecting...', 'success');
-    setTimeout(() => UI.redirectByRole(selectedRole), 800);
+    setTimeout(() => UI.redirectByRole(window.selectedRole), 800);
 
   } catch (err) {
     UI.toast('Invalid email or password.', 'error');
@@ -103,15 +120,22 @@ async function handleLogin() {
 
 async function handleRegister() {
   const btn = document.getElementById('submitBtn');
+  const email = document.getElementById('email').value.trim();
+
+  if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    UI.toast('Please enter a valid email address.', 'warning');
+    return;
+  }
+
   UI.setLoading(btn, true);
 
   try {
     await AuthAPI.register({
       name:     document.getElementById('firstName').value + ' ' +
                 document.getElementById('lastName').value,
-      email:    document.getElementById('email').value.trim(),
+      email:    email,
       password: document.getElementById('password').value,
-      role:     selectedRole
+      role:     window.selectedRole
     });
 
     // Show success screen
@@ -149,7 +173,7 @@ async function loadCustomerBookings(customerId) {
         <div class="booking-item">
           <div class="booking-details">
             <div class="booking-name">Booking #${b.id}</div>
-            <div class="booking-date">${UI.formatDate(b.bookingDate)} · ${b.address}</div>
+            <div class="booking-date">${UI.formatDate(b.bookingDate)} · ${UI.escapeHtml(b.address)}</div>
           </div>
           ${UI.statusBadge(b.status)}
           ${b.status === 'CONFIRMED'
@@ -246,7 +270,7 @@ async function loadProviderBookings(serviceId) {
       tbody.innerHTML += `
         <tr>
           <td>#${b.id}</td>
-          <td>${b.address}</td>
+          <td>${UI.escapeHtml(b.address)}</td>
           <td>${UI.formatDate(b.bookingDate)}</td>
           <td>${UI.statusBadge(b.status)}</td>
           <td>
@@ -287,6 +311,110 @@ async function completeBooking(bookingId) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+//  BOOKING SEARCH (Date Filter)
+// ─────────────────────────────────────────────────────────────
+
+async function searchBookingsByDate() {
+  const dateVal = document.getElementById('searchDate').value;
+  if (!dateVal) {
+    UI.toast('Please select a date', 'warning');
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/bookings/search?date=${dateVal}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (response.ok) {
+      const bookings = await response.json();
+      const tbody = document.getElementById('bookingTableBody'); 
+      if (tbody) {
+        tbody.innerHTML = ''; 
+        if (bookings.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">No bookings found for this date.</td></tr>';
+            return;
+        }
+        bookings.forEach(b => {
+          tbody.innerHTML += `
+            <tr>
+              <td>#${b.id}</td>
+              <td>${UI.escapeHtml(b.address)}</td>
+              <td>${UI.formatDate(b.bookingDate)}</td>
+              <td>${UI.statusBadge(b.status)}</td>
+              <td>
+                ${b.status === 'PENDING'
+                  ? `<button onclick="confirmBooking(${b.id})">Confirm</button>`
+                  : ''}
+                ${b.status === 'CONFIRMED'
+                  ? `<button onclick="completeBooking(${b.id})">Complete</button>`
+                  : ''}
+                 <button onclick="checkPaymentStatus(${b.id})">Status</button>
+              </td>
+            </tr>`;
+        });
+        UI.toast(`Found ${bookings.length} bookings`, 'success');
+      }
+    } else {
+      UI.toast('Search failed', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    UI.toast('Error searching bookings', 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  REVIEWS & RATINGS
+// ─────────────────────────────────────────────────────────────
+
+async function loadServiceReviews(serviceId) {
+  try {
+    const sortValue = document.getElementById('reviewSort')?.value || 'createdAt,desc';
+    const reviews = await ReviewAPI.getForService(serviceId, sortValue);
+    const container = document.getElementById('reviewsContainer');
+    container.innerHTML = '';
+
+    if (reviews.length === 0) {
+      container.innerHTML = '<p>No reviews yet.</p>';
+      return;
+    }
+
+    reviews.forEach(r => {
+      container.innerHTML += `
+        <div class="review-item" style="border-bottom:1px solid #eee; padding:10px 0;">
+          <div style="display:flex; justify-content:space-between;">
+            <strong>${UI.escapeHtml(r.customerName)}</strong>
+            <span style="color:gold">${'★'.repeat(r.rating)}</span>
+          </div>
+          <p style="margin:5px 0;">${UI.escapeHtml(r.comment)}</p>
+          <div style="font-size:0.8rem; color:#666; display:flex; align-items:center; gap:10px;">
+            <span>${UI.formatDate(r.createdAt)}</span>
+            <button onclick="markReviewHelpful(this, ${r.id})" style="border:none; background:none; cursor:pointer; color:#007bff;">
+              👍 Helpful (<span class="helpful-count">${r.helpfulCount || 0}</span>)
+            </button>
+          </div>
+        </div>`;
+    });
+  } catch (err) {
+    console.error('Failed to load reviews', err);
+  }
+}
+
+async function markReviewHelpful(btn, reviewId) {
+  try {
+    const newCount = await ReviewAPI.markHelpful(reviewId);
+    const countSpan = btn.querySelector('.helpful-count');
+    if (countSpan) countSpan.textContent = newCount;
+    btn.disabled = true;
+    btn.style.color = '#28a745';
+    UI.toast('Marked as helpful!', 'success');
+  } catch (err) {
+    UI.toast('Failed to mark helpful.', 'error');
+  }
+}
 
 // ─────────────────────────────────────────────────────────────
 //  PAYMENT STATUS CHECK  (any page)

@@ -158,9 +158,9 @@ Use these credentials to test the application:
 
 | Email | Password | Role |
 |-------|----------|------|
-| customer@servicemate.com | password | CUSTOMER |
-| provider@servicemate.com | password | PROVIDER |
-| admin@servicemate.com | password | ADMIN |
+| customer@servicemate.com | 123456 | CUSTOMER |
+| provider@servicemate.com | 123456 | PROVIDER |
+| admin@servicemate.com | 123456 | ADMIN |
 
 ## Testing with Postman
 

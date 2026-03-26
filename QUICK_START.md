@@ -27,7 +27,7 @@ setup.bat
 
 **Every time you want to run the project:**
 
-1. Run `run-project.bat`
+1. Run `.\run-project.bat` (in PowerShell) or `run-project.bat` (in Command Prompt)
 2. Enter your MySQL root password when prompted
 3. Wait for "Tomcat started on port(s): 8080"
 4. Open browser to: **http://localhost:8080/login.html**

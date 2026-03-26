@@ -65,9 +65,9 @@ SOURCE /path/to/database/servicemate_schema.sql;
 **Test Credentials After Setup:**
 | Email | Password | Role |
 |-------|----------|------|
-| customer@servicemate.com | password | CUSTOMER |
-| provider@servicemate.com | password | PROVIDER |
-| admin@servicemate.com | password | ADMIN |
+| customer@servicemate.com | 123456 | CUSTOMER |
+| provider@servicemate.com | 123456 | PROVIDER |
+| admin@servicemate.com | 123456 | ADMIN |
 
 ### Step 2️⃣: Configure & Build Backend
 
@@ -552,5 +552,3 @@ For detailed information, see:
 **Repository Structure Version**: 2.0 (Organized)
 **Last Updated**: March 2, 2026
 **Status**: ✅ Production Ready
-
-
