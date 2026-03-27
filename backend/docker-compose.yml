@@ -12,6 +12,11 @@ services:
       MYSQL_ROOT_PASSWORD: root
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -23,6 +28,28 @@ services:
       PMA_HOST: mysql
     depends_on:
       - mysql
+
+  backend:
+    build: .
+    container_name: servicemate-app
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=mysql
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: backend/frontend.Dockerfile
+    container_name: servicemate-ui
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   mysql_data:

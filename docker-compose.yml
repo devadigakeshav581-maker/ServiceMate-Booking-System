@@ -1,34 +1,46 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
     container_name: servicemate-db
+    restart: always
     environment:
       MYSQL_DATABASE: servicemate
       MYSQL_ROOT_PASSWORD: Root@2026
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
     ports:
-      - "3306:3306"
+      - "3307:3306"
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-pRoot@2026"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  app:
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: servicemate-app
+    restart: on-failure
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/servicemate?allowPublicKeyRetrieval=true&useSSL=false
-      - SPRING_DATASOURCE_USERNAME=root
+      - DB_HOST=db
       - SPRING_DATASOURCE_PASSWORD=Root@2026
       - SPRING_MAIL_USERNAME=keshavisdevadiga07@gmail.com
       - SPRING_MAIL_PASSWORD=dwiz cgdc jmjp knfw
       - JWT_SECRET=your_very_long_and_secure_random_jwt_secret_key_here
+
+  frontend:
+    build:
+      context: .
+      dockerfile: backend/frontend.Dockerfile
+    container_name: servicemate-ui
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

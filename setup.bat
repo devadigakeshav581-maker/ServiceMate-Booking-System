@@ -4,6 +4,9 @@ REM This script will help install Java 17, Maven 4.0, and MySQL 8.0
 
 setlocal enabledelayedexpansion
 
+REM Ensure the script runs from its own directory (critical after UAC elevation)
+cd /d "%~dp0"
+
 echo.
 echo ========================================
 echo   ServiceMate - Automated Setup
@@ -12,17 +15,11 @@ echo.
 
 REM Check if running as administrator
 net session >nul 2>&1
-if !errorLevel! neq 0 (
-    echo ERROR: This script must be run as Administrator
-    echo.
-    echo Solution:
-    echo 1. Right-click on Command Prompt
-    echo 2. Select "Run as administrator"
-    echo 3. Navigate to this script location
-    echo 4. Run: setup.bat
-    echo.
-    pause
-    exit /b 1
+if "%errorlevel%" neq "0" (
+    echo Requesting administrative privileges...
+    REM Using cmd /k ensures the new window stays open if an error occurs
+    powershell -Command "Start-Process cmd -ArgumentList '/k \"\"%~f0\"\"' -Verb RunAs"
+    exit /b
 )
 
 goto :main
@@ -36,16 +33,16 @@ REM Function to check for and install a package using Winget
     echo.
     echo [STEP] Checking for !tool_name!...
     call %check_command% >nul 2>&1
-    if !errorLevel! equ 0 (
+    if "%errorlevel%" equ "0" (
         echo ✓ !tool_name! is already installed.
         call %check_command%
     ) else (
         echo ✗ !tool_name! NOT found.
         winget --version >nul 2>&1
-        if !errorLevel! equ 0 (
+        if "%errorlevel%" equ "0" (
             echo    -> Attempting to install with Winget ^(this may take a few minutes^)...
             winget install --id !winget_id! -e --accept-package-agreements --accept-source-agreements
-            if !errorLevel! neq 0 (
+            if "%errorlevel%" neq "0" (
                 echo ERROR: Winget installation failed for !tool_name!. Please install it manually.
             )
         ) else (
@@ -85,7 +82,7 @@ echo.
 set all_found=1
 
 java -version >nul 2>&1
-if !errorLevel! equ 0 (
+if "%errorlevel%" equ "0" (
     echo ✓ Java Found
 ) else (
     echo ✗ Java NOT Found
@@ -93,13 +90,13 @@ if !errorLevel! equ 0 (
 )
 
 mvn -version >nul 2>&1
-if !errorLevel! equ 0 (
+if "%errorlevel%" equ "0" (
     echo ✓ Maven Found
 ) else (
     set "path_updated_manually=0"
     set "MAVEN_PATH="
-    if exist "C:\maven\bin\mvn.cmd" set "MAVEN_PATH=C:\maven\bin"
-    if exist "C:\Program Files\maven\apache-maven-4.0.0\bin\mvn.cmd" set "MAVEN_PATH=C:\Program Files\maven\apache-maven-4.0.0\bin"
+    if exist "C:\maven\bin\mvn.cmd" set "MAVEN_PATH=C:\maven\bin" REM Check for common Maven install path
+    if exist "C:\Program Files\maven\apache-maven-4.0.0\bin\mvn.cmd" set "MAVEN_PATH=C:\Program Files\maven\apache-maven-4.0.0\bin" REM Check for common Maven install path
     
     if defined MAVEN_PATH (
         echo    -> Maven found at !MAVEN_PATH! but not in PATH.
@@ -121,7 +118,7 @@ if !errorLevel! equ 0 (
 )
 
 mysql --version >nul 2>&1
-if !errorLevel! equ 0 (
+if "%errorlevel%" equ "0" (
     echo ✓ MySQL Found
 ) else (
     set "MYSQL_BIN_PATH="

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ServiceMate WebSocket Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; background: #f9f9f9; }
+        .message { margin-bottom: 5px; padding: 5px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h2>ServiceMate Real-Time Updates</h2>
+    
+    <div>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()" disabled id="disconnectBtn">Disconnect</button>
+        <button onclick="requestNotificationPermission()">Enable Notifications</button>
+    </div>
+    <hr/>
+    
+    <!-- Simulation of User Login for private notifications -->
+    <div>
+        <label>Simulate User:</label>
+        <input type="text" id="username" placeholder="Enter username (e.g. admin)" value="admin">
+    </div>
+    <div>
+        <label>JWT Token:</label>
+        <input type="text" id="token" placeholder="Bearer eyJhbG..." style="width: 300px;">
+    </div>
+
+    <h3>Messages:</h3>
+    <div id="messages"></div>
+
+    <!-- Audio element for notification sound -->
+    <audio id="notificationSound" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
+
+    <script>
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            // Optional: Headers for authentication if needed
+            var token = document.getElementById("token").value;
+            var headers = token ? { 'Authorization': token } : {};
+
+            stompClient.connect(headers, function (frame) {
+                console.log('Connected: ' + frame);
+                setConnected(true);
+                
+                var username = document.getElementById("username").value;
+                log("Connected as " + username);
+
+                // 1. Subscribe to Public Broadcasts
+                stompClient.subscribe('/topic/bookings/1', function (message) {
+                    log("BroadCast Update: " + message.body);
+                    showNotification(message.body);
+                });
+
+                // 2. Subscribe to Private User Notifications
+                // Note: Spring automatically translates /user/queue/notifications 
+                // to a unique queue for this session/user
+                stompClient.subscribe('/user/queue/notifications', function (message) {
+                    log("Private Notification: " + message.body);
+                    showNotification(message.body);
+                });
+
+                // 3. Subscribe to Admin-only new user topic
+                stompClient.subscribe('/topic/admin/new-user', function (message) {
+                    log("ADMIN ONLY - New User: " + message.body);
+                    showNotification(message.body);
+                });
+
+            }, function(error) {
+                console.error("STOMP error " + error);
+                log("Connection Error: " + error);
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+            setConnected(false);
+            log("Disconnected");
+        }
+
+        function setConnected(connected) {
+            document.getElementById('disconnectBtn').disabled = !connected;
+        }
+
+        function log(message) {
+            var response = document.getElementById('messages');
+            var p = document.createElement('div');
+            p.className = 'message';
+            p.innerHTML = "[" + new Date().toLocaleTimeString() + "] " + message;
+            response.appendChild(p);
+            response.scrollTop = response.scrollHeight;
+        }
+
+        function playNotificationSound() {
+            var audio = document.getElementById("notificationSound");
+            audio.currentTime = 0; // Reset to start if playing multiple times quickly
+            audio.play().catch(function(error) {
+                console.log("Audio play failed (browser might require interaction): " + error);
+            });
+        }
+
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("This browser does not support desktop notification");
+            } else {
+                Notification.requestPermission().then(function (permission) {
+                    console.log("Notification permission: " + permission);
+                });
+            }
+        }
+
+        function showNotification(message) {
+            if (Notification.permission === "granted") {
+                new Notification("ServiceMate Update", {
+                    body: message
+                });
+            }
+            playNotificationSound();
+        }
+    </script>
+</body>
+</html>

@@ -4,6 +4,9 @@ REM This script runs the project using Docker Compose
 
 setlocal enabledelayedexpansion
 
+REM Ensure the script runs from its own directory (critical after UAC elevation)
+cd /d "%~dp0"
+
 echo.
 echo ========================================
 echo   ServiceMate - Project Runner
@@ -12,20 +15,16 @@ echo.
 
 REM Check if running as administrator
 net session >nul 2>&1
-if !errorLevel! neq 0 (
-    echo ERROR: This script must be run as Administrator to start services.
-    echo.
-    echo Solution:
-    echo 1. Right-click on Command Prompt or this script
-    echo 2. Select "Run as administrator"
-    echo.
-    pause
-    exit /b 1
+if %errorlevel% neq 0 (
+    echo Requesting administrative privileges...
+    REM Using cmd /k ensures the new window stays open if an error occurs
+    powershell -Command "Start-Process cmd -ArgumentList '/c %~s0' -Verb RunAs"
+    exit /b
 )
 
 REM Check if Docker is installed
 docker --version >nul 2>&1
-if %errorLevel% neq 0 (
+if "%errorlevel%" neq "0" (
     echo ERROR: Docker is not installed or not in your PATH.
     echo Please install Docker Desktop from https://www.docker.com/products/docker-desktop
     pause
@@ -34,7 +33,7 @@ if %errorLevel% neq 0 (
 
 REM Check if Docker Desktop is running
 docker info >nul 2>&1
-if %errorLevel% neq 0 (
+if "%errorlevel%" neq "0" (
     echo ERROR: Docker Desktop is not running or still starting up.
     echo.
     echo Solution: 
@@ -50,17 +49,29 @@ echo ✓ Docker Engine is READY (Green Status Detected)
 echo.
 
 echo [STEP 1] Stopping any existing containers...
-docker-compose down
+REM The -v flag removes volumes, ensuring the DB re-initializes with fresh SQL scripts
+docker compose down -v
 echo.
 
-echo [STEP 2] Building and Starting Services...
+echo [STEP 2] Cleaning and Building Services...
 echo This will build the backend and pull the MySQL image.
 echo.
 
-REM Use docker-compose up with --build to ensure latest code is used
-docker-compose up --build -d
+REM Attempt to clean the backend target folder if Maven is available
+REM This prevents "Permission Denied" errors caused by host-owned artifacts
+pushd backend
+mvn -version >nul 2>&1
+if "%errorlevel%" equ "0" (
+    echo [INFO] Running local mvn clean to reset file permissions...
+    call mvn clean
+    if "%errorlevel%" neq "0" echo [WARN] Maven clean failed, proceeding anyway.
+)
+popd
 
-if !errorLevel! neq 0 (
+REM Use --build and --force-recreate to ensure a fresh environment
+docker compose up --build --force-recreate -d
+
+if "%errorlevel%" neq "0" (
     echo.
     echo ERROR: Docker Compose failed to start.
     pause
