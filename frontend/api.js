@@ -15,10 +15,11 @@ function getRole()        { return localStorage.getItem('role'); }
 function getUserId()      { return localStorage.getItem('userId'); }
 function isLoggedIn()     { return !!getToken(); }
 
-function saveSession(token, role, userId) {
+function saveSession(token, role, userId, name) {
   localStorage.setItem('token', token);
   localStorage.setItem('role', role);
   localStorage.setItem('userId', userId ?? '');
+  localStorage.setItem('userName', name ?? 'User');
 }
 
 function logout() {
@@ -83,11 +84,15 @@ const AuthAPI = {
   // Login and save token
   // Usage: const token = await AuthAPI.login({ email, password })
   async login(data) {
-    const token = await apiFetch('/api/auth/login', 'POST', data, false);
-    if (token) {
-      saveSession(token, data.role || 'CUSTOMER', null);
+    const response = await apiFetch('/api/auth/login', 'POST', data, false);
+    const tokenStr = typeof response === 'object' ? response.token : response;
+    const roleStr = typeof response === 'object' && response.role ? response.role : (data.role || 'CUSTOMER');
+    const nameStr = typeof response === 'object' ? response.name : null;
+    
+    if (tokenStr) {
+      saveSession(tokenStr, roleStr, response.userId || null, nameStr);
     }
-    return token;
+    return tokenStr;
   }
 };
 
@@ -233,6 +238,12 @@ const UI = {
     }
   },
 
+  // Toggle sidebar for mobile
+  toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.style.display = sidebar.style.display === 'flex' ? 'none' : 'flex';
+  },
+
   // Render status badge HTML
   // Usage: UI.statusBadge('CONFIRMED')
   statusBadge(status) {
@@ -279,41 +290,88 @@ const UI = {
 
 
 // ─────────────────────────────────────────
-//  REAL-TIME SOCKET HELPERS (socket.io)
+//  REAL-TIME SOCKET HELPERS (STOMP over SockJS)
 // ─────────────────────────────────────────
 
 const Socket = {
-  socket: null,
-  callbacks: [],
+  stompClient: null,
+  connected: false,
+  subscriptions: new Map(),
 
-  // establish a socket.io connection (or reuse existing)
-  connect(url = '/') {
-    if (Socket.socket) return Socket.socket;
-    if (typeof io === 'undefined') {
-      console.warn('socket.io client not loaded');
-      return null;
+  /**
+   * Connect to the WebSocket endpoint
+   * @param {Function} callback - Success callback
+   */
+  connect(callback) {
+    if (this.connected && this.stompClient) {
+      if (callback) callback();
+      return;
     }
-    Socket.socket = io(url);
 
-    Socket.socket.on('connect', () => console.log('Socket connected'));
-    Socket.socket.on('disconnect', () => { console.log('Socket disconnected'); Socket.socket = null; });
-    Socket.socket.on('error', err => console.error('[Socket] error', err));
-    Socket.socket.onAny((event, data) => {
-      Socket.callbacks.forEach(cb => cb({ type: event, ...data }));
+    if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+      console.warn('[STOMP] SockJS or Stomp client not loaded yet');
+      setTimeout(() => this.connect(callback), 500);
+      return;
+    }
+
+    const socket = new SockJS(BASE_URL + '/ws');
+    this.stompClient = Stomp.over(socket);
+    this.stompClient.debug = null; // Disable debug logging
+
+    const headers = {
+      'Authorization': 'Bearer ' + getToken()
+    };
+
+    this.stompClient.connect(headers, (frame) => {
+      console.log('[STOMP] Connected');
+      this.connected = true;
+      if (callback) callback();
+    }, (error) => {
+      console.error('[STOMP] Connection error: ', error);
+      this.connected = false;
+      // Reconnect after 3 seconds
+      setTimeout(() => this.connect(callback), 3000);
+    });
+  },
+
+  /**
+   * Subscribe to a specific topic
+   * @param {String} topic - The topic to subscribe to (e.g., /topic/bookings/5)
+   * @param {Function} callback - Callback for incoming messages
+   */
+  subscribe(topic, callback) {
+    if (!this.connected) {
+      // Defer subscription until connected
+      setTimeout(() => this.subscribe(topic, callback), 1000);
+      return;
+    }
+
+    // Unsubscribe if already subscribed to this topic
+    if (this.subscriptions.has(topic)) {
+      this.subscriptions.get(topic).unsubscribe();
+    }
+
+    const sub = this.stompClient.subscribe(topic, (message) => {
+      try {
+        const payload = JSON.parse(message.body);
+        callback(payload);
+      } catch (e) {
+        callback(message.body);
+      }
     });
 
-    return Socket.socket;
+    this.subscriptions.set(topic, sub);
+    console.log('[STOMP] Subscribed to ' + topic);
   },
 
-  // register a handler for incoming messages
-  onMessage(cb) {
-    if (typeof cb === 'function') Socket.callbacks.push(cb);
-  },
-
-  // send a JSON-serializable payload to server via custom event
-  send(event, data) {
-    if (Socket.socket && Socket.socket.connected) {
-      Socket.socket.emit(event, data);
+  /**
+   * Send a message to a destination
+   * @param {String} destination - The target prefix (e.g., /app/chat)
+   * @param {Object} payload - Data to send
+   */
+  send(destination, payload) {
+    if (this.connected && this.stompClient) {
+      this.stompClient.send(destination, {}, JSON.stringify(payload));
     }
   }
 };

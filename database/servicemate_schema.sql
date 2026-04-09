@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS services (
     PRIMARY KEY (id),
     INDEX idx_services_provider (provider_id),
     INDEX idx_services_category (category),
+    FULLTEXT idx_services_search (name, description),
 
     CONSTRAINT fk_service_provider
         FOREIGN KEY (provider_id)
@@ -178,6 +179,12 @@ INSERT INTO users (name, email, password, phone, role) VALUES
  '$2a$10$slYQmyNdgTY74z4Qnr1ffuJA1OzDK0P5I6LY.E4sQ1xDc5A.3eS9W', -- '123456'
  '9111111111', 'PROVIDER');
 
+-- Second Provider (password: 123456)
+INSERT INTO users (name, email, password, phone, role) VALUES
+('Elite Cleaners', 'elite@servicemate.com',
+ '$2a$10$slYQmyNdgTY74z4Qnr1ffuJA1OzDK0P5I6LY.E4sQ1xDc5A.3eS9W', -- '123456'
+ '9333333333', 'PROVIDER');
+
 -- Customer user (password: 123456)
 INSERT INTO users (name, email, password, phone, role) VALUES
 ('Default Customer', 'customer@servicemate.com',
@@ -191,7 +198,13 @@ INSERT INTO services (name, description, price, category, provider_id) VALUES
 ('Fan Installation',    'Ceiling and wall fan installation',    349.00, 'Electrical', 2),
 ('Wiring & Switchboard','Rewiring and switchboard repair',      599.00, 'Electrical', 2),
 ('Home Deep Cleaning',  'Complete home deep cleaning service',  999.00, 'Cleaning',   2),
-('AC Servicing',        'AC filter clean and gas refill',       599.00, 'AC Repair',  2);
+('AC Servicing',        'AC filter clean and gas refill',       599.00, 'AC Repair',  2),
+-- Services from Provider 4
+('Office Cleaning',     'Professional office space sanitization', 1500.00, 'Cleaning',  4),
+('Kitchen Deep Clean',  'Degreasing and deep cleaning of kitchens', 850.00, 'Cleaning',  4),
+('Carpet Shampooing',   'Industrial grade carpet cleaning',     450.00, 'Cleaning',    4),
+('Pest Control',        'General pest and termite control',      1200.00, 'Pest Control', 4),
+('Garden Maintenance',  'Lawn mowing and plant care',           300.00, 'Gardening',   4);
 
 -- Sample bookings (customer id=3, various services)
 INSERT INTO bookings (customer_id, service_id, status, address, notes) VALUES

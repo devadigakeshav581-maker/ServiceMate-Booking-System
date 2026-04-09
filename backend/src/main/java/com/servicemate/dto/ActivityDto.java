@@ -7,10 +7,14 @@ public class ActivityDto {
     private String message;
     private Instant timestamp;
 
+    public ActivityDto() {
+        this.timestamp = Instant.now();
+    }
+
     public ActivityDto(String type, String message) {
+        this();
         this.type = type;
         this.message = message;
-        this.timestamp = Instant.now();
     }
 
     // Getters and setters are required for JSON serialization

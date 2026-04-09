@@ -21,18 +21,17 @@ const BookingModal = ({ isOpen, onClose, services, onSubmit }) => {
         setError('');
         
         if (!bookingData.serviceId || !bookingData.bookingDate || !bookingData.address) {
-            setError('Please fill out all fields.');
+            setError('Please complete all fields to secure your booking.');
             return;
         }
 
         setIsSubmitting(true);
         try {
             await onSubmit(bookingData);
-            // Reset form and close on success
             setBookingData({ serviceId: '', bookingDate: '', address: '' });
             onClose();
         } catch (err) {
-            setError(err.message || 'Failed to create booking.');
+            setError(err.message || 'Platform synchronization failed.');
         } finally {
             setIsSubmitting(false);
         }
@@ -44,70 +43,99 @@ const BookingModal = ({ isOpen, onClose, services, onSubmit }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-4">Create New Booking</h2>
-                <form onSubmit={handleSubmit} noValidate>
-                    {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-                    <div className="mb-4">
-                        <label htmlFor="serviceId" className="block text-gray-700 text-sm font-bold mb-2">Service</label>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-[100] p-4 animate-in fade-in duration-300">
+            <div className="premium-card w-full max-w-lg p-0 overflow-hidden shadow-2xl border-[#6c63ff]/20 animate-in zoom-in-95 duration-500">
+                <header className="p-8 border-b border-[#2a2a3a] bg-gradient-to-r from-[#6c63ff]/5 to-transparent">
+                    <h2 className="text-3xl font-extrabold text-white font-serif tracking-tight">Reserve Service</h2>
+                    <p className="text-[#7070a0] text-sm mt-1">Configure your professional service request below.</p>
+                </header>
+                
+                <form onSubmit={handleSubmit} noValidate className="p-8 space-y-6">
+                    {error && (
+                        <div className="bg-[#ff6584]/10 border border-[#ff6584]/20 text-[#ff6584] p-4 rounded-xl text-xs font-bold animate-in slide-in-from-top-2">
+                            ⚠️ {error}
+                        </div>
+                    )}
+                    
+                    <div className="space-y-2 text-white">
+                        <label className="text-[0.65rem] font-black uppercase tracking-[3px] text-[#7070a0] ml-1">Select Service Offering</label>
                         <select
-                            id="serviceId"
                             name="serviceId"
                             value={bookingData.serviceId}
                             onChange={handleChange}
-                            required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="premium-input w-full appearance-none pr-10"
                         >
-                            <option value="" disabled>Select a service</option>
-                            {services.length > 0 ? (
-                                services.map(service => (
-                                    <option key={service.id} value={service.id}>
-                                        {service.name} - ${service.price}
-                                    </option>
-                                ))
-                            ) : (
-                                <option disabled>No services available</option>
-                            )}
+                            <option value="" disabled>Choose from catalog...</option>
+                            {services.map(service => (
+                                <option key={service.id} value={service.id} className="bg-[#13131a]">
+                                    {service.name} — ₹{service.price}
+                                </option>
+                            ))}
                         </select>
                     </div>
-                    <div className="mb-4">
-                        <label htmlFor="bookingDate" className="block text-gray-700 text-sm font-bold mb-2">Date</label>
-                        <input
-                            type="date"
-                            id="bookingDate"
-                            name="bookingDate"
-                            value={bookingData.bookingDate}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                            min={new Date().toISOString().split("T")[0]} // Prevent booking past dates
-                        />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+                        <div className="space-y-2">
+                            <label className="text-[0.65rem] font-black uppercase tracking-[3px] text-[#7070a0] ml-1">Service Date</label>
+                            <input
+                                type="date"
+                                name="bookingDate"
+                                value={bookingData.bookingDate}
+                                onChange={handleChange}
+                                min={new Date().toISOString().split("T")[0]}
+                                className="premium-input w-full"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[0.65rem] font-black uppercase tracking-[3px] text-[#7070a0] ml-1">Service Time</label>
+                            <select className="premium-input w-full">
+                                <option>09:00 AM - Morning</option>
+                                <option>02:00 PM - Afternoon</option>
+                                <option>06:00 PM - Evening</option>
+                            </select>
+                        </div>
                     </div>
-                    <div className="mb-4">
-                        <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-2">Address</label>
+
+                    <div className="space-y-2 text-white">
+                        <label className="text-[0.65rem] font-black uppercase tracking-[3px] text-[#7070a0] ml-1">Full Service Address</label>
                         <input
                             type="text"
-                            id="address"
                             name="address"
                             value={bookingData.address}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter service address"
-                            required
+                            placeholder="Street, Building, Unit Number"
+                            className="premium-input w-full"
                         />
                     </div>
-                    <div className="mt-6 flex justify-end gap-4">
-                        <button type="button" onClick={handleClose} className="py-2 px-4 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 disabled:opacity-50" disabled={isSubmitting}>Cancel</button>
-                        <button type="submit" className="py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2" disabled={isSubmitting}>
-                            {isSubmitting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                            {isSubmitting ? 'Processing...' : 'Confirm Booking'}
+
+                    <footer className="pt-6 flex gap-4">
+                        <button 
+                            type="button" 
+                            onClick={handleClose} 
+                            className="flex-1 py-3 bg-[#1c1c27] border border-[#2a2a3a] text-white rounded-xl font-bold hover:bg-[#252535] transition-all"
+                            disabled={isSubmitting}
+                        >
+                            Dismiss
                         </button>
-                    </div>
+                        <button 
+                            type="submit" 
+                            className="flex-[2] premium-button py-3 flex items-center justify-center gap-2"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Syncing...</span>
+                                </>
+                            ) : (
+                                'Secure Booking'
+                            )}
+                        </button>
+                    </footer>
                 </form>
             </div>
         </div>
     );
 };
 
-export default BookingModal;
+export default BookingModal;

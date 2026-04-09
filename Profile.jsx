@@ -24,17 +24,6 @@ const Profile = () => {
 
     const fetchProfile = async () => {
         try {
-            // Assuming endpoint GET /api/users/profile returns current user details
-            // You might need to adjust the endpoint based on your backend implementation
-            // If using userId in URL: `/api/users/${localStorage.getItem('userId')}`
-            const userId = localStorage.getItem('userId') || 'me'; 
-            // Using 'me' is a common convention if the backend supports it, otherwise use ID
-            // For this example, let's assume the backend has a /api/users/me endpoint
-            // or we use the ID stored in localStorage if available.
-            
-            // If your backend requires an ID and you don't store it, you might need to decode the token.
-            // For now, let's try a generic endpoint or assume one exists.
-            // Adjust '/api/users/profile' to match your actual backend endpoint.
             const response = await api.get('/api/users/profile'); 
             setFormData({
                 name: response.data.name || '',
@@ -57,11 +46,9 @@ const Profile = () => {
         e.preventDefault();
         setError('');
         setSuccess('');
-        
         try {
             await api.put('/api/users/profile', formData);
             setSuccess('Profile updated successfully!');
-            // Update local storage name if changed
             localStorage.setItem('name', formData.name);
         } catch (err) {
             console.error('Error updating profile:', err);
@@ -93,61 +80,105 @@ const Profile = () => {
                 currentPassword: passwordData.currentPassword,
                 newPassword: passwordData.newPassword
             });
-            setPasswordSuccess('Password changed successfully!');
+            setPasswordSuccess('Password successfully changed!');
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         } catch (err) {
             console.error('Error changing password:', err);
-            setPasswordError(err.response?.data?.message || 'Failed to change password. Verify your current password.');
+            setPasswordError(err.response?.data?.message || 'Failed to change password.');
         }
     };
 
-    if (loading) return <div className="text-center p-10">Loading...</div>;
+    if (loading) return <div className="text-center p-20 text-[#7070a0]">Loading profile...</div>;
 
     return (
-        <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">My Profile</h2>
-            
-            {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
-            {success && <div className="bg-green-100 text-green-700 p-3 rounded mb-4">{success}</div>}
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <header>
+                <h1 className="text-3xl font-extrabold text-white font-serif tracking-tight">Account Settings</h1>
+                <p className="text-[#7070a0] mt-1">Manage your personal information and security preferences.</p>
+            </header>
 
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <label className="block text-gray-700 font-bold mb-2">Name</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Left: Profile Summary */}
+                <div className="space-y-6">
+                    <div className="premium-card text-center py-10">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#6c63ff] to-[#ff6584] mx-auto mb-4 flex items-center justify-center text-4xl font-black text-white shadow-lg">
+                            {formData.name.charAt(0).toUpperCase()}
+                        </div>
+                        <h2 className="text-xl font-bold text-white">{formData.name}</h2>
+                        <p className="text-[#7070a0] text-sm">{formData.email}</p>
+                        <div className="mt-6 pt-6 border-t border-[#2a2a3a]">
+                            <div className="text-[0.65rem] font-bold text-[#7070a0] uppercase tracking-widest mb-1">Role</div>
+                            <div className="text-[#6c63ff] font-bold text-sm tracking-widest">{localStorage.getItem('role')}</div>
+                        </div>
+                    </div>
                 </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 font-bold mb-2">Email</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                </div>
-                <div className="mb-6">
-                    <label className="block text-gray-700 font-bold mb-2">Phone</label>
-                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Update Profile</button>
-            </form>
 
-            <hr className="my-8 border-gray-200" />
+                {/* Right: Forms */}
+                <div className="md:col-span-2 space-y-8">
+                    {/* Personal Info */}
+                    <div className="premium-card">
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            <span className="text-2xl">📝</span> Personal Information
+                        </h2>
+                        
+                        {error && <div className="bg-[#ff6584]/10 text-[#ff6584] p-4 rounded-xl mb-6 text-sm border border-[#ff6584]/20">{error}</div>}
+                        {success && <div className="bg-[#43e97b]/10 text-[#43e97b] p-4 rounded-xl mb-6 text-sm border border-[#43e97b]/20">✨ {success}</div>}
 
-            <h2 className="text-xl font-bold mb-6 text-gray-800">Change Password</h2>
-            
-            {passwordError && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{passwordError}</div>}
-            {passwordSuccess && <div className="bg-green-100 text-green-700 p-3 rounded mb-4">{passwordSuccess}</div>}
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="text-[0.7rem] font-bold text-[#7070a0] uppercase tracking-widest ml-1">Full Name</label>
+                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="premium-input w-full" required />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[0.7rem] font-bold text-[#7070a0] uppercase tracking-widest ml-1">Phone Number</label>
+                                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="premium-input w-full" placeholder="+1 (555) 000-0000" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[0.7rem] font-bold text-[#7070a0] uppercase tracking-widest ml-1">Email Address</label>
+                                <input type="email" value={formData.email} className="premium-input w-full opacity-50 cursor-not-allowed" disabled />
+                                <p className="text-[0.65rem] text-[#7070a0] italic">Email cannot be changed for security reasons.</p>
+                            </div>
+                            <div className="pt-4">
+                                <button type="submit" className="premium-button w-full md:w-auto px-10">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
 
-            <form onSubmit={handlePasswordSubmit}>
-                <div className="mb-4">
-                    <label className="block text-gray-700 font-bold mb-2">Current Password</label>
-                    <input type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                    {/* Change Password */}
+                    <div className="premium-card">
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            <span className="text-2xl">🔒</span> Security & Password
+                        </h2>
+                        
+                        {passwordError && <div className="bg-[#ff6584]/10 text-[#ff6584] p-4 rounded-xl mb-6 text-sm border border-[#ff6584]/20">{passwordError}</div>}
+                        {passwordSuccess && <div className="bg-[#43e97b]/10 text-[#43e97b] p-4 rounded-xl mb-6 text-sm border border-[#43e97b]/20">✨ {passwordSuccess}</div>}
+
+                        <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                            <div className="space-y-2">
+                                <label className="text-[0.7rem] font-bold text-[#7070a0] uppercase tracking-widest ml-1">Current Password</label>
+                                <input type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} className="premium-input w-full" required />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="text-[0.7rem] font-bold text-[#7070a0] uppercase tracking-widest ml-1">New Password</label>
+                                    <input type="password" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} className="premium-input w-full" required />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[0.7rem] font-bold text-[#7070a0] uppercase tracking-widest ml-1">Confirm New Password</label>
+                                    <input type="password" name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} className="premium-input w-full" required />
+                                </div>
+                            </div>
+                            <div className="pt-4">
+                                <button type="submit" className="bg-[#1c1c27] border border-[#2a2a3a] text-white font-bold py-2.5 px-10 rounded-xl hover:border-[#6c63ff] hover:text-[#6c63ff] transition-all">
+                                    Change Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 font-bold mb-2">New Password</label>
-                    <input type="password" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                </div>
-                <div className="mb-6">
-                    <label className="block text-gray-700 font-bold mb-2">Confirm New Password</label>
-                    <input type="password" name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                </div>
-                <button type="submit" className="w-full bg-gray-700 text-white font-bold py-2 px-4 rounded hover:bg-gray-800">Change Password</button>
-            </form>
+            </div>
         </div>
     );
 };

@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c27;
+  --accent: #6c63ff;
+  --accent2: #ff6584;
+  --accent3: #43e97b;
+  --text: #f0f0f8;
+  --muted: #7070a0;
+  --border: #2a2a3a;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+.premium-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.premium-button {
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.premium-button:hover {
+  background: #5a52e0;
+  transform: translateY(-1px);
+}
+
+.premium-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 10px;
+  outline: none;
+}
+
+.premium-input:focus {
+  border-color: var(--accent);
+}

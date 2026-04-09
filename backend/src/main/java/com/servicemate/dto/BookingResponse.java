@@ -10,6 +10,7 @@ public class BookingResponse {
     private Long customerId;
     private Long serviceId;
     private String serviceName;
+    private Double price;
     private BookingStatus status;
     private String address;
     private String notes;

@@ -9,15 +9,19 @@ import { Navigate } from 'react-router-dom';
  */
 const ProtectedRoute = ({ children, requiredRole }) => {
     const token = localStorage.getItem('token');
-    const userRole = localStorage.getItem('role');
+    const userRole = (localStorage.getItem('role') || '').trim().toUpperCase();
+    const normalizedRequiredRole = requiredRole ? requiredRole.trim().toUpperCase() : null;
 
     if (!token) {
         // User not logged in, redirect to login page.
         return <Navigate to="/login" replace />;
     }
 
-    if (requiredRole && userRole !== requiredRole) {
-        // User does not have the required role, redirect to login.
+    if (normalizedRequiredRole && userRole !== normalizedRequiredRole) {
+        // User does not have the required role, redirect to their dashboard if possible.
+        if (userRole === 'ADMIN') return <Navigate to="/admin" replace />;
+        if (userRole === 'PROVIDER') return <Navigate to="/provider" replace />;
+        if (userRole === 'CUSTOMER') return <Navigate to="/customer" replace />;
         return <Navigate to="/login" replace />;
     }
 

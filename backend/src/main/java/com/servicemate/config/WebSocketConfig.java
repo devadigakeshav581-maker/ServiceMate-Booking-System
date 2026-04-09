@@ -66,8 +66,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     if (authHeader != null && authHeader.startsWith("Bearer ")) {
                         String token = authHeader.substring(7);
                         try {
-                            Claims claims = Jwts.parser()
-                                    .setSigningKey(jwtSecret.getBytes())
+                            byte[] keyBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                            var signingKey = io.jsonwebtoken.security.Keys.hmacShaKeyFor(keyBytes);
+                            
+                            Claims claims = Jwts.parserBuilder()
+                                    .setSigningKey(signingKey)
+                                    .build()
                                     .parseClaimsJws(token)
                                     .getBody();
                             String username = claims.getSubject();

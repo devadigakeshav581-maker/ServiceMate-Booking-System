@@ -60,11 +60,14 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/auth/**", // Auth endpoints
                     "/v3/api-docs/**", "/swagger-ui/**", // Swagger/OpenAPI
-                    "/", "/*.html", "/*.js", "/*.css", "/*.ico", "/images/**" // Static frontend assets
+                    "/", "/*.html", "/*.js", "/*.css", "/*.ico", "/images/**", // Static frontend assets
+                    "/ws/**", // WebSocket endpoint
+                    "/error"
                 ).permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/**").hasAuthority("ADMIN")
-                .requestMatchers("/api/users/**", "/api/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/users/online/**", "/api/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/users/profile", "/api/users/change-password").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

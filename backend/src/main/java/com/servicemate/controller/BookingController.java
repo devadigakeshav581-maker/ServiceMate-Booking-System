@@ -51,6 +51,18 @@ public class BookingController {
 
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<BookingResponse>> getMyBookings() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(bookingService.getBookingsByCustomer(email));
+    }
+
+    @GetMapping("/provider")
+    public ResponseEntity<List<BookingResponse>> getProviderBookings() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(bookingService.getBookingsByProvider(email));
+    }
+
     @PostMapping("/create")
     public ResponseEntity<Booking> createBooking(@RequestBody BookingRequest request) {
         Booking newBooking = bookingService.createBooking(request);
@@ -59,7 +71,7 @@ public class BookingController {
         return ResponseEntity.ok(newBooking);
     }
 
-    @PutMapping("/confirm/{id}")
+    @PutMapping("/{id}/confirm")
     public ResponseEntity<Booking> confirmBooking(@PathVariable Long id) {
         Booking booking = bookingService.confirmBooking(id);
         String activityMessage = String.format("Booking #%d was confirmed.", booking.getId());
@@ -68,7 +80,7 @@ public class BookingController {
         return ResponseEntity.ok(booking);
     }
 
-    @PutMapping("/complete/{id}")
+    @PutMapping("/{id}/complete")
     public ResponseEntity<Booking> completeBooking(@PathVariable Long id) {
         Booking booking = bookingService.completeBooking(id);
         String activityMessage = String.format("Booking #%d was completed.", booking.getId());
@@ -77,7 +89,7 @@ public class BookingController {
         return ResponseEntity.ok(booking);
     }
 
-    @PutMapping("/cancel/{id}")
+    @PutMapping("/{id}/cancel")
     public ResponseEntity<Booking> cancelBooking(@PathVariable Long id) {
         Booking booking = bookingService.cancelBooking(id);
         String activityMessage = String.format("Booking #%d was cancelled.", booking.getId());

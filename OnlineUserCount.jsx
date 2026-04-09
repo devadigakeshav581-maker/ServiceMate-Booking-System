@@ -26,7 +26,7 @@ const OnlineUserCount = () => {
         fetchOnlineCount();
 
         // 2. Real-time updates via WebSocket
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS(`${window.location.origin}/ws`);
         const stompClient = Stomp.over(socket);
         stompClient.debug = null; // Disable debug logs
 

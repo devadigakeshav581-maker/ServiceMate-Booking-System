@@ -1,49 +1,53 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './Navbar';
-import ProtectedRoute from './ProtectedRoute'; // Import the new component
+import Layout from './Layout';
+import ProtectedRoute from './ProtectedRoute';
 import Login from './Login';
 import Register from './Register';
 import CustomerDashboard from './CustomerDashboard';
 import Profile from './Profile';
 import ProviderDashboard from './ProviderDashboard';
 import ProviderServices from './ProviderServices';
-
-// Placeholder for the Admin Dashboard
-const AdminDashboard = () => <div className="bg-white p-6 rounded-lg shadow-md"><h1 className="text-3xl font-bold">Admin Dashboard</h1></div>;
+import AdminDashboard from './AdminDashboard'; // Import from separate file
+import { Socket } from './api';
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+      <Layout>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-            {/* Customer Routes */}
-            <Route path="/customer" element={
-              <ProtectedRoute requiredRole="CUSTOMER">
-                <CustomerDashboard />
-              </ProtectedRoute>
-            } />
+          {/* Customer Routes */}
+          <Route path="/customer" element={<ProtectedRoute requiredRole="CUSTOMER"><CustomerDashboard /></ProtectedRoute>} />
+          <Route path="/customer/services" element={<ProtectedRoute requiredRole="CUSTOMER"><CustomerDashboard /></ProtectedRoute>} />
+          <Route path="/customer/bookings" element={<ProtectedRoute requiredRole="CUSTOMER"><CustomerDashboard /></ProtectedRoute>} />
+          <Route path="/customer/payments" element={<ProtectedRoute requiredRole="CUSTOMER"><CustomerDashboard /></ProtectedRoute>} />
 
-            {/* Provider Routes */}
-            <Route path="/provider" element={<ProtectedRoute requiredRole="PROVIDER"><ProviderDashboard /></ProtectedRoute>} />
-            <Route path="/provider/services" element={<ProtectedRoute requiredRole="PROVIDER"><ProviderServices /></ProtectedRoute>} />
-            
-            {/* Profile Route - Accessible by all authenticated users */}
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          {/* Provider Routes */}
+          <Route path="/provider" element={<ProtectedRoute requiredRole="PROVIDER"><ProviderDashboard /></ProtectedRoute>} />
+          <Route path="/provider/services" element={<ProtectedRoute requiredRole="PROVIDER"><ProviderDashboard /></ProtectedRoute>} />
+          <Route path="/provider/bookings" element={<ProtectedRoute requiredRole="PROVIDER"><ProviderDashboard /></ProtectedRoute>} />
+          <Route path="/provider/earnings" element={<ProtectedRoute requiredRole="PROVIDER"><ProviderDashboard /></ProtectedRoute>} />
+          
+          {/* Profile Route - Accessible by all authenticated users */}
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-            {/* Admin Route */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          {/* Admin Routes */}
+          <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/services" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/bookings" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/payments" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/security" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
 
-            {/* Fallback Route - Redirects to login if no other route matches */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </div>
-      </div>
+          {/* Fallback Route */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Layout>
     </Router>
   );
 }

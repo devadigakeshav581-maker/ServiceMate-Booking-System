@@ -297,22 +297,24 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+  import api from '../api.js';
+  
   let selectedRole = 'CUSTOMER';
 
-  function selectRole(el, role) {
+  window.selectRole = function(el, role) {
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
     selectedRole = role;
   }
 
-  function togglePass(id, icon) {
+  window.togglePass = function(id, icon) {
     const inp = document.getElementById(id);
     if (inp.type === 'password') { inp.type = 'text'; icon.textContent = '🙈'; }
     else { inp.type = 'password'; icon.textContent = '👁'; }
   }
 
-  function clearError(field) {
+  window.clearError = function(field) {
     document.getElementById(field).classList.remove('error');
     document.getElementById(field + '-err').classList.remove('show');
     document.getElementById('alertBox').classList.remove('show');
@@ -335,7 +337,7 @@
     return ok;
   }
 
-  function handleLogin() {
+  window.handleLogin = async function() {
     if (!validate()) return;
     const btn = document.getElementById('loginBtn');
     btn.classList.add('loading');
@@ -345,35 +347,32 @@
       password: document.getElementById('password').value
     };
 
-    fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Invalid credentials');
-      return res.text();
-    })
-    .then(token => {
+    try {
+      const response = await api.post('/api/auth/login', body);
+      const { token, role, name } = response.data;
+      
+      // Store authentication data
       localStorage.setItem('token', token);
-      localStorage.setItem('role', selectedRole);
+      localStorage.setItem('userRole', role);
+      localStorage.setItem('userName', name);
+      
       // Redirect based on role
       const redirectMap = {
         CUSTOMER: 'customer-dashboard.html',
         PROVIDER: 'provider-dashboard.html',
         ADMIN: 'admin-dashboard.html'
       };
-      window.location.href = redirectMap[selectedRole] || 'customer-dashboard.html';
-    })
-    .catch(() => {
+      window.location.href = redirectMap[role] || 'customer-dashboard.html';
+    } catch (err) {
+      console.error('Login failed:', err);
       btn.classList.remove('loading');
       const box = document.getElementById('alertBox');
       box.classList.add('show', 'alert-error');
-      document.getElementById('alertMsg').textContent = 'Invalid email or password. Please try again.';
-    });
+      document.getElementById('alertMsg').textContent = err.response?.data?.message || 'Invalid email or password. Please try again.';
+    }
   }
 
-  function quickLogin(email, pass, role) {
+  window.quickLogin = function(email, pass, role) {
     document.querySelectorAll('.role-btn').forEach(b => {
       b.classList.remove('selected');
       if (b.querySelector('.role-name').textContent.toUpperCase() === role) b.classList.add('selected');
@@ -385,7 +384,7 @@
 
   // Enter key support
   document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleLogin();
+    if (e.key === 'Enter') window.handleLogin();
   });
 </script>
 <script src="http://localhost:8080/socket.io/socket.io.js"></script>

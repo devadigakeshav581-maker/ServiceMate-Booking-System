@@ -95,15 +95,15 @@ public class AuthService implements UserDetailsService {
         return "Registration successful! Please check your email to verify your account.";
     }
 
-    public String login(LoginRequest request) {
+    public java.util.Map<String, String> login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found!"));
 
-        if (!user.getIsVerified()) {
+        if (!Boolean.TRUE.equals(user.getIsVerified())) {
             throw new RuntimeException("Account not verified. Please check your email.");
         }
 
-        if (!user.getIsActive()) {
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
             throw new RuntimeException("This account has been suspended.");
         }
 
@@ -111,7 +111,13 @@ public class AuthService implements UserDetailsService {
             throw new RuntimeException("Invalid password!");
         }
 
-        return jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("token", token);
+        response.put("role", user.getRole().name());
+        response.put("name", user.getName());
+        response.put("userId", user.getId().toString());
+        return response;
     }
 
     public String forgotPassword(String email) {

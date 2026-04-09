@@ -43,6 +43,15 @@ ServiceMate/
 
 ## 🚀 Quick Start Guide
 
+### Option A: Run with Docker (Recommended)
+If you have Docker installed, simply run the automated script from the project root:
+
+```bash
+run-project.bat
+```
+Then access: `http://localhost:8080/login.html`
+
+### Option B: Manual Setup
 ### Prerequisites
 - **Java**: JDK 17 or higher
 - **Maven**: 4.0.0 or higher

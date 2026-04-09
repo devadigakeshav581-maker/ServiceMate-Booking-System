@@ -5,7 +5,7 @@ WORKDIR /app
 # 1. Install dependencies only when package files change
 # Using npm ci for faster, predictable builds in CI/Docker
 COPY package*.json ./
-RUN npm ci --quiet
+RUN npm install --quiet
 
 # 2. Copy the rest of the application source
 COPY . .

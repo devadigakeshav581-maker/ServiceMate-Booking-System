@@ -486,30 +486,23 @@
       name: first + (last ? ' ' + last : ''),
       email: document.getElementById('email').value.trim(),
       password: document.getElementById('password').value,
+      phone: document.getElementById('phone').value.trim(),
       role: selectedRole
     };
 
-    fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Registration failed');
-      return res.text();
-    })
+    AuthAPI.register(body)
     .then(() => {
       btn.classList.remove('loading');
       document.getElementById('step3').style.display = 'none';
       document.getElementById('successName').textContent = first;
       document.getElementById('successScreen').classList.add('show');
     })
-    .catch(err => {
+    .catch((err) => {
       btn.classList.remove('loading');
       const box = document.getElementById('alertBox');
       box.className = 'alert alert-error show';
       document.getElementById('alertIcon').textContent = '⚠️';
-      document.getElementById('alertMsg').textContent = 'Registration failed. Email may already be in use.';
+      document.getElementById('alertMsg').textContent = err.message || 'Registration failed. Email may already be in use.';
     });
   }
 </script>

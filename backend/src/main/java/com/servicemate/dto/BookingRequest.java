@@ -8,4 +8,5 @@ public class BookingRequest {
     private Long serviceId;
     private String address;
     private String notes;
+    private String bookingDate;
 }

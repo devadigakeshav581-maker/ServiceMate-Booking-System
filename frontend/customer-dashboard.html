@@ -1,346 +1,997 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ServiceMate – Customer Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c27;
-    --accent: #6c63ff;
-    --accent2: #ff6584;
-    --accent3: #43e97b;
-    --text: #f0f0f8;
-    --muted: #7070a0;
-    --border: #2a2a3a;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ServiceMate – Customer Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c27;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43e97b;
+      --text: #f0f0f8;
+      --muted: #7070a0;
+      --border: #2a2a3a;
+    }
 
-  /* Sidebar */
-  .sidebar {
-    width: 240px; min-height:100vh; background:var(--surface);
-    border-right:1px solid var(--border); display:flex; flex-direction:column;
-    padding: 28px 0; position:fixed; top:0; left:0; z-index:10;
-  }
-  .logo { padding: 0 24px 32px; font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; color:var(--accent); letter-spacing:-0.5px; }
-  .logo span { color:var(--accent2); }
-  .nav-section { padding: 8px 0; }
-  .nav-label { font-size:.65rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:2px; padding: 6px 24px; }
-  .nav-item {
-    display:flex; align-items:center; gap:12px; padding:11px 24px;
-    color:var(--muted); cursor:pointer; transition:.2s; font-size:.9rem;
-    border-left: 3px solid transparent;
-  }
-  .nav-item:hover { color:var(--text); background:var(--surface2); }
-  .nav-item.active { color:var(--accent); border-left-color:var(--accent); background:rgba(108,99,255,.08); }
-  .nav-icon { font-size:1.1rem; width:20px; text-align:center; }
-  .sidebar-footer { margin-top:auto; padding:24px; }
-  .user-chip { display:flex; align-items:center; gap:10px; }
-  .avatar { width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem; }
-  .user-info { font-size:.8rem; }
-  .user-info strong { display:block; font-weight:500; }
-  .user-info span { color:var(--muted); font-size:.72rem; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  /* Main */
-  .main { margin-left:240px; flex:1; padding:36px 40px; }
-  .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:36px; }
-  .page-title { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; }
-  .page-title span { color:var(--accent); }
-  .topbar-right { display:flex; gap:12px; align-items:center; }
-  .badge { background:var(--accent); color:#fff; border-radius:50%; width:20px;height:20px;font-size:.65rem;display:flex;align-items:center;justify-content:center;font-weight:700; }
-  .btn { padding:9px 20px; border-radius:10px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:500; transition:.2s; }
-  .btn-primary { background:var(--accent); color:#fff; }
-  .btn-primary:hover { background:#5a52e0; }
-  .btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
-  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+    }
 
-  /* Stats */
-  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
-  .stat-card {
-    background:var(--surface); border:1px solid var(--border); border-radius:16px;
-    padding:20px; position:relative; overflow:hidden; transition:.2s;
-  }
-  .stat-card:hover { border-color:var(--accent); transform:translateY(-2px); }
-  .stat-card::before { content:''; position:absolute; top:0; right:0; width:60px;height:60px;border-radius:0 16px 0 60px; opacity:.15; }
-  .stat-card.c1::before { background:var(--accent); }
-  .stat-card.c2::before { background:var(--accent2); }
-  .stat-card.c3::before { background:var(--accent3); }
-  .stat-card.c4::before { background:#f9ca24; }
-  .stat-label { font-size:.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
-  .stat-value { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; }
-  .stat-card.c1 .stat-value { color:var(--accent); }
-  .stat-card.c2 .stat-value { color:var(--accent2); }
-  .stat-card.c3 .stat-value { color:var(--accent3); }
-  .stat-card.c4 .stat-value { color:#f9ca24; }
-  .stat-sub { font-size:.75rem; color:var(--muted); margin-top:4px; }
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
 
-  /* Grid layout */
-  .content-grid { display:grid; grid-template-columns:1fr 340px; gap:24px; }
+    .logo {
+      padding: 0 24px 32px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
 
-  /* Services */
-  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; }
-  .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-  .card-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; }
-  .services-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-  .service-tile {
-    background:var(--surface2); border:1px solid var(--border); border-radius:12px;
-    padding:16px; cursor:pointer; transition:.25s; text-align:center;
-  }
-  .service-tile:hover { border-color:var(--accent); transform:translateY(-3px); box-shadow:0 8px 24px rgba(108,99,255,.2); }
-  .service-emoji { font-size:1.8rem; margin-bottom:8px; }
-  .service-name { font-size:.85rem; font-weight:500; margin-bottom:4px; }
-  .service-price { font-size:.75rem; color:var(--accent); font-weight:600; }
+    .logo span {
+      color: var(--accent2);
+    }
 
-  /* Bookings */
-  .booking-list { display:flex; flex-direction:column; gap:10px; }
-  .booking-item {
-    display:flex; align-items:center; gap:14px;
-    background:var(--surface2); border-radius:12px; padding:14px;
-    border:1px solid var(--border); transition:.2s;
-  }
-  .booking-item:hover { border-color:var(--border); background:var(--surface); }
-  .booking-icon { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0; }
-  .booking-icon.plumb { background:rgba(108,99,255,.15); }
-  .booking-icon.elec { background:rgba(249,202,36,.15); }
-  .booking-icon.clean { background:rgba(67,233,123,.15); }
-  .booking-details { flex:1; }
-  .booking-name { font-size:.88rem; font-weight:500; }
-  .booking-date { font-size:.72rem; color:var(--muted); margin-top:2px; }
-  .status-pill { padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:600; }
-  .status-pending { background:rgba(249,202,36,.15); color:#f9ca24; }
-  .status-confirmed { background:rgba(108,99,255,.15); color:var(--accent); }
-  .status-completed { background:rgba(67,233,123,.15); color:var(--accent3); }
-  .status-cancelled { background:rgba(255,101,132,.15); color:var(--accent2); }
+    .nav-section {
+      padding: 8px 0;
+    }
 
-  /* Payment History */
-  .payment-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
-  .payment-item:last-child { border-bottom:none; }
-  .payment-left { display:flex; align-items:center; gap:10px; }
-  .payment-dot { width:8px;height:8px;border-radius:50%; }
-  .payment-dot.success { background:var(--accent3); }
-  .payment-dot.failed { background:var(--accent2); }
-  .payment-info { font-size:.82rem; }
-  .payment-info span { display:block; font-size:.7rem; color:var(--muted); }
-  .payment-amount { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; }
-  .payment-amount.success { color:var(--accent3); }
-  .payment-amount.failed { color:var(--accent2); }
+    .nav-label {
+      font-size: .65rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding: 6px 24px;
+    }
 
-  /* Book Modal */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-  .modal-overlay.open { display:flex; }
-  .modal { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; width:420px; max-width:90vw; }
-  .modal-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; margin-bottom:20px; }
-  .form-group { margin-bottom:16px; }
-  .form-label { font-size:.78rem; color:var(--muted); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:.5px; }
-  .form-input, .form-select, .form-textarea {
-    width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px;
-    padding:10px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:.88rem;
-    outline:none; transition:.2s;
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); }
-  .form-textarea { resize:none; height:80px; }
-  .modal-actions { display:flex; gap:10px; margin-top:20px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 24px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: .2s;
+      font-size: .9rem;
+      border-left: 3px solid transparent;
+    }
 
-  /* Animations */
-  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
-  .stat-card { animation:fadeIn .4s ease both; }
-  .stat-card:nth-child(1){animation-delay:.05s}
-  .stat-card:nth-child(2){animation-delay:.1s}
-  .stat-card:nth-child(3){animation-delay:.15s}
-  .stat-card:nth-child(4){animation-delay:.2s}
+    .nav-item:hover {
+      color: var(--text);
+      background: var(--surface2);
+    }
 
-  .toast { position:fixed; bottom:24px; right:24px; background:var(--accent3); color:#0a0a0f; padding:12px 20px; border-radius:12px; font-weight:600; font-size:.85rem; z-index:999; display:none; animation:fadeIn .3s ease; }
-</style>
+    .nav-item.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: rgba(108, 99, 255, .08);
+    }
+
+    .nav-icon {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 24px;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: .9rem;
+    }
+
+    .user-info {
+      font-size: .8rem;
+    }
+
+    .user-info strong {
+      display: block;
+      font-weight: 500;
+    }
+
+    .user-info span {
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    /* Main */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      padding: 36px 40px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 800;
+    }
+
+    .page-title span {
+      color: var(--accent);
+    }
+
+    .topbar-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: .65rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .btn {
+      padding: 9px 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: .2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #5a52e0;
+    }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: .2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 60px;
+      height: 60px;
+      border-radius: 0 16px 0 60px;
+      opacity: .15;
+    }
+
+    .stat-card.c1::before {
+      background: var(--accent);
+    }
+
+    .stat-card.c2::before {
+      background: var(--accent2);
+    }
+
+    .stat-card.c3::before {
+      background: var(--accent3);
+    }
+
+    .stat-card.c4::before {
+      background: #f9ca24;
+    }
+
+    .stat-label {
+      font-size: .75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .stat-card.c1 .stat-value {
+      color: var(--accent);
+    }
+
+    .stat-card.c2 .stat-value {
+      color: var(--accent2);
+    }
+
+    .stat-card.c3 .stat-value {
+      color: var(--accent3);
+    }
+
+    .stat-card.c4 .stat-value {
+      color: #f9ca24;
+    }
+
+    .stat-sub {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Grid layout */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+
+    /* Services */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .service-tile {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: .25s;
+      text-align: center;
+    }
+
+    .service-tile:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(108, 99, 255, .2);
+    }
+
+    .service-emoji {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    .service-name {
+      font-size: .85rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .service-price {
+      font-size: .75rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Bookings */
+    .booking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .booking-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      transition: .2s;
+    }
+
+    .booking-item:hover {
+      border-color: var(--border);
+      background: var(--surface);
+    }
+
+    .booking-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .booking-icon.plumb {
+      background: rgba(108, 99, 255, .15);
+    }
+
+    .booking-icon.elec {
+      background: rgba(249, 202, 36, .15);
+    }
+
+    .booking-icon.clean {
+      background: rgba(67, 233, 123, .15);
+    }
+
+    .booking-details {
+      flex: 1;
+    }
+
+    .booking-name {
+      font-size: .88rem;
+      font-weight: 500;
+    }
+
+    .booking-date {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .7rem;
+      font-weight: 600;
+    }
+
+    .status-pending {
+      background: rgba(249, 202, 36, .15);
+      color: #f9ca24;
+    }
+
+    .status-confirmed {
+      background: rgba(108, 99, 255, .15);
+      color: var(--accent);
+    }
+
+    .status-completed {
+      background: rgba(67, 233, 123, .15);
+      color: var(--accent3);
+    }
+
+    .status-cancelled {
+      background: rgba(255, 101, 132, .15);
+      color: var(--accent2);
+    }
+
+    /* Payment History */
+    .payment-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .payment-item:last-child {
+      border-bottom: none;
+    }
+
+    .payment-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .payment-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .payment-dot.success {
+      background: var(--accent3);
+    }
+
+    .payment-dot.failed {
+      background: var(--accent2);
+    }
+
+    .payment-info {
+      font-size: .82rem;
+    }
+
+    .payment-info span {
+      display: block;
+      font-size: .7rem;
+      color: var(--muted);
+    }
+
+    .payment-amount {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: .95rem;
+    }
+
+    .payment-amount.success {
+      color: var(--accent3);
+    }
+
+    .payment-amount.failed {
+      color: var(--accent2);
+    }
+
+    /* Book Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      width: 420px;
+      max-width: 90vw;
+    }
+
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .88rem;
+      outline: none;
+      transition: .2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      resize: none;
+      height: 80px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .stat-card {
+      animation: fadeIn .4s ease both;
+    }
+
+    .stat-card:nth-child(1) {
+      animation-delay: .05s
+    }
+
+    .stat-card:nth-child(2) {
+      animation-delay: .1s
+    }
+
+    .stat-card:nth-child(3) {
+      animation-delay: .15s
+    }
+
+    .stat-card:nth-child(4) {
+      animation-delay: .2s
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--accent3);
+      color: #0a0a0f;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: .85rem;
+      z-index: 999;
+      display: none;
+      animation: fadeIn .3s ease;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- Sidebar -->
-<aside class="sidebar">
-  <div class="logo">Service<span>Mate</span></div>
-  <nav class="nav-section">
-    <div class="nav-label">Menu</div>
-    <div class="nav-item active"><span class="nav-icon">🏠</span> Dashboard</div>
-    <div class="nav-item" onclick="showSection('services')"><span class="nav-icon">🔧</span> Browse Services</div>
-    <div class="nav-item" onclick="showSection('bookings')"><span class="nav-icon">📅</span> My Bookings</div>
-    <div class="nav-item" onclick="showSection('payments')"><span class="nav-icon">💳</span> Payments</div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="user-chip">
-      <div class="avatar">K</div>
-      <div class="user-info"><strong>Keshav</strong><span>Customer</span></div>
-    </div>
-  </div>
-</aside>
-
-<!-- Main -->
-<main class="main">
-  <div class="topbar">
-    <div class="page-title">Good morning, <span>Keshav</span> 👋</div>
-    <div class="topbar-right">
-      <button class="btn btn-primary" onclick="openModal()">+ Book Service</button>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-grid">
-    <div class="stat-card c1"><div class="stat-label">Total Bookings</div><div class="stat-value">12</div><div class="stat-sub">↑ 3 this month</div></div>
-    <div class="stat-card c2"><div class="stat-label">Pending</div><div class="stat-value">2</div><div class="stat-sub">Awaiting confirmation</div></div>
-    <div class="stat-card c3"><div class="stat-label">Completed</div><div class="stat-value">9</div><div class="stat-sub">All time</div></div>
-    <div class="stat-card c4"><div class="stat-label">Total Spent</div><div class="stat-value">₹4.2k</div><div class="stat-sub">Across all services</div></div>
-  </div>
-
-  <div class="content-grid">
-    <!-- Left -->
-    <div>
-      <!-- Services -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header">
-          <div class="card-title">Available Services</div>
-          <input id="serviceSearch" class="search-bar" placeholder="Search services..." style="margin-right:12px"/>
-          <button class="btn btn-ghost" style="font-size:.78rem;padding:6px 14px;">View All</button>
-        </div>
-        <div class="services-grid" id="servicesContainer">
-          <!-- service tiles inserted by script -->
-        </div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Service<span>Mate</span></div>
+    <nav class="nav-section">
+      <div class="nav-label">Menu</div>
+      <div class="nav-item active"><span class="nav-icon">🏠</span> Dashboard</div>
+      <div class="nav-item" onclick="showSection('services')"><span class="nav-icon">🔧</span> Browse Services</div>
+      <div class="nav-item" onclick="showSection('bookings')"><span class="nav-icon">📅</span> My Bookings</div>
+      <div class="nav-item" onclick="showSection('payments')"><span class="nav-icon">💳</span> Payments</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">K</div>
+        <div class="user-info"><strong id="sidebar-user-name">User</strong><span>Customer</span></div>
       </div>
+    </div>
+  </aside>
 
-      <!-- Recent Bookings -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Recent Bookings</div>
-        </div>
-        <div class="booking-list">
-          <div class="booking-item"><div class="booking-icon plumb">🔧</div><div class="booking-details"><div class="booking-name">Plumbing Repair</div><div class="booking-date">Today, 10:00 AM · 123 MG Road</div></div><span class="status-pill status-confirmed">Confirmed</span></div>
-          <div class="booking-item"><div class="booking-icon elec">⚡</div><div class="booking-details"><div class="booking-name">Electrical Work</div><div class="booking-date">Yesterday, 2:00 PM · 456 Brigade Rd</div></div><span class="status-pill status-completed">Completed</span></div>
-          <div class="booking-item"><div class="booking-icon clean">🧹</div><div class="booking-details"><div class="booking-name">Home Cleaning</div><div class="booking-date">Mar 1 · 789 Koramangala</div></div><span class="status-pill status-pending">Pending</span></div>
-        </div>
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title">Good morning, <span id="greeting-name">User</span> 👋</div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openModal()">+ Book Service</button>
       </div>
     </div>
 
-    <!-- Right -->
-    <div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Payment History</div></div>
-        <div>
-          <div class="payment-item"><div class="payment-left"><div class="payment-dot success"></div><div class="payment-info">Plumbing Repair<span>Feb 28, 2025</span></div></div><div class="payment-amount success">₹499</div></div>
-          <div class="payment-item"><div class="payment-left"><div class="payment-dot success"></div><div class="payment-info">Electrical Work<span>Feb 25, 2025</span></div></div><div class="payment-amount success">₹749</div></div>
-          <div class="payment-item"><div class="payment-left"><div class="payment-dot failed"></div><div class="payment-info">AC Repair<span>Feb 20, 2025</span></div></div><div class="payment-amount failed">₹599</div></div>
-          <div class="payment-item"><div class="payment-left"><div class="payment-dot success"></div><div class="payment-info">Home Cleaning<span>Feb 15, 2025</span></div></div><div class="payment-amount success">₹999</div></div>
-          <div class="payment-item"><div class="payment-left"><div class="payment-dot success"></div><div class="payment-info">Carpentry<span>Feb 10, 2025</span></div></div><div class="payment-amount success">₹1,299</div></div>
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card c1">
+        <div class="stat-label">Total Bookings</div>
+        <div class="stat-value">12</div>
+        <div class="stat-sub">↑ 3 this month</div>
+      </div>
+      <div class="stat-card c2">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">2</div>
+        <div class="stat-sub">Awaiting confirmation</div>
+      </div>
+      <div class="stat-card c3">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value">9</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card c4">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value">₹4.2k</div>
+        <div class="stat-sub">Across all services</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <!-- Left -->
+      <div>
+        <!-- Services -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div class="card-title">Available Services</div>
+            <input id="serviceSearch" class="search-bar" placeholder="Search services..." style="margin-right:12px" />
+            <button class="btn btn-ghost" style="font-size:.78rem;padding:6px 14px;">View All</button>
+          </div>
+          <div class="services-grid" id="servicesContainer">
+            <!-- service tiles inserted by script -->
+          </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Bookings</div>
+          </div>
+          <div class="booking-list">
+            <div class="booking-item">
+              <div class="booking-icon plumb">🔧</div>
+              <div class="booking-details">
+                <div class="booking-name">Plumbing Repair</div>
+                <div class="booking-date">Today, 10:00 AM · 123 MG Road</div>
+              </div><span class="status-pill status-confirmed">Confirmed</span>
+            </div>
+            <div class="booking-item">
+              <div class="booking-icon elec">⚡</div>
+              <div class="booking-details">
+                <div class="booking-name">Electrical Work</div>
+                <div class="booking-date">Yesterday, 2:00 PM · 456 Brigade Rd</div>
+              </div><span class="status-pill status-completed">Completed</span>
+            </div>
+            <div class="booking-item">
+              <div class="booking-icon clean">🧹</div>
+              <div class="booking-details">
+                <div class="booking-name">Home Cleaning</div>
+                <div class="booking-date">Mar 1 · 789 Koramangala</div>
+              </div><span class="status-pill status-pending">Pending</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Payment History</div>
+          </div>
+          <div>
+            <div class="payment-item">
+              <div class="payment-left">
+                <div class="payment-dot success"></div>
+                <div class="payment-info">Plumbing Repair<span>Feb 28, 2025</span></div>
+              </div>
+              <div class="payment-amount success">₹499</div>
+            </div>
+            <div class="payment-item">
+              <div class="payment-left">
+                <div class="payment-dot success"></div>
+                <div class="payment-info">Electrical Work<span>Feb 25, 2025</span></div>
+              </div>
+              <div class="payment-amount success">₹749</div>
+            </div>
+            <div class="payment-item">
+              <div class="payment-left">
+                <div class="payment-dot failed"></div>
+                <div class="payment-info">AC Repair<span>Feb 20, 2025</span></div>
+              </div>
+              <div class="payment-amount failed">₹599</div>
+            </div>
+            <div class="payment-item">
+              <div class="payment-left">
+                <div class="payment-dot success"></div>
+                <div class="payment-info">Home Cleaning<span>Feb 15, 2025</span></div>
+              </div>
+              <div class="payment-amount success">₹999</div>
+            </div>
+            <div class="payment-item">
+              <div class="payment-left">
+                <div class="payment-dot success"></div>
+                <div class="payment-info">Carpentry<span>Feb 10, 2025</span></div>
+              </div>
+              <div class="payment-amount success">₹1,299</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </main>
+
+  <!-- Book Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-title">Book a Service</div>
+      <div class="form-group">
+        <label class="form-label">Service</label>
+        <select class="form-select" id="serviceSelect">
+          <option>Plumbing – ₹299</option>
+          <option>Electrical – ₹349</option>
+          <option>Cleaning – ₹499</option>
+          <option>AC Repair – ₹599</option>
+          <option>Carpentry – ₹449</option>
+          <option>Painting – ₹799</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input class="form-input" placeholder="Enter your address" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-textarea" placeholder="Any special instructions..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Payment Method</label>
+        <select class="form-select">
+          <option>UPI</option>
+          <option>Credit / Debit Card</option>
+          <option>Cash on Service</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" style="flex:1" onclick="confirmBooking()">Confirm & Pay</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
   </div>
-</main>
 
-<!-- Book Modal -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <div class="modal-title">Book a Service</div>
-    <div class="form-group">
-      <label class="form-label">Service</label>
-      <select class="form-select" id="serviceSelect">
-        <option>Plumbing – ₹299</option>
-        <option>Electrical – ₹349</option>
-        <option>Cleaning – ₹499</option>
-        <option>AC Repair – ₹599</option>
-        <option>Carpentry – ₹449</option>
-        <option>Painting – ₹799</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Address</label>
-      <input class="form-input" placeholder="Enter your address" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Notes (optional)</label>
-      <textarea class="form-textarea" placeholder="Any special instructions..."></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Payment Method</label>
-      <select class="form-select">
-        <option>UPI</option>
-        <option>Credit / Debit Card</option>
-        <option>Cash on Service</option>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-primary" style="flex:1" onclick="confirmBooking()">Confirm & Pay</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-</div>
+  <div class="toast" id="toast">✅ Booking confirmed!</div>
 
-<div class="toast" id="toast">✅ Booking confirmed!</div>
+  <script type="module">
+    import { UI, getUserId, getUserRole, getUserName, ServiceAPI, BookingAPI, Socket } from '../api.js';
 
-<script>
-  function openModal() { document.getElementById('modal').classList.add('open'); }
-  function closeModal() { document.getElementById('modal').classList.remove('open'); }
-  function selectService(name) {
-    const sel = document.getElementById('serviceSelect');
-    for(let o of sel.options) { if(o.text.startsWith(name)) { sel.value = o.value; break; } }
-    openModal();
-  }
-  function confirmBooking() {
-    closeModal();
-    const t = document.getElementById('toast');
-    t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 3000);
-  }
-  document.getElementById('modal').addEventListener('click', function(e) {
-    if(e.target === this) closeModal();
-  });
+    function openModal() { document.getElementById('modal').classList.add('open'); }
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
-  // load services and hook search
-  async function renderServices(list) {
-    const container = document.getElementById('servicesContainer');
-    container.innerHTML = '';
-    list.forEach(s => {
-      container.innerHTML += `
+    async function selectService(name) {
+      const sel = document.getElementById('serviceSelect');
+      for (let o of sel.options) { if (o.text.startsWith(name)) { sel.value = o.value; break; } }
+      openModal();
+    }
+
+    async function confirmBooking() {
+      const serviceSelect = document.getElementById('serviceSelect');
+      const selectedService = serviceSelect.options[serviceSelect.selectedIndex];
+      const serviceName = selectedService.text.split(' – ')[0];
+      const priceMatch = selectedService.text.match(/₹(\d+)/);
+      const price = priceMatch ? parseInt(priceMatch[1]) : 0;
+
+      try {
+        // Find service ID from loaded services
+        const services = await ServiceAPI.getAll();
+        const service = services.find(s => s.name === serviceName);
+
+        if (!service) throw new Error('Service not found');
+
+        const bookingData = {
+          customerId: getUserId(),
+          serviceId: service.id,
+          address: document.querySelector('input[placeholder="Enter your address"]').value,
+          notes: document.querySelector('textarea').value || '',
+          bookingDate: new Date().toISOString()
+        };
+
+        await BookingAPI.create(bookingData);
+        closeModal();
+        UI.toast('✅ Booking confirmed!', 'success');
+
+        // Reload bookings
+        await loadCustomerBookings(getUserId());
+      } catch (err) {
+        console.error(err);
+        UI.toast('Failed to create booking', 'error');
+      }
+    }
+
+    document.getElementById('modal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Make functions available globally
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.selectService = selectService;
+    window.confirmBooking = confirmBooking;
+
+    // Load and render services
+    async function renderServices(list) {
+      const container = document.getElementById('servicesContainer');
+      container.innerHTML = '';
+      list.forEach(s => {
+        container.innerHTML += `
         <div class="service-tile" onclick="selectService('${s.name}')">
           <div class="service-emoji">🔧</div>
           <div class="service-name">${s.name}</div>
           <div class="service-price">From ₹${s.price}</div>
         </div>`;
-    });
-  }
-
-  async function loadServices(query = '') {
-    try {
-      let list;
-      if (query) list = await ServiceAPI.getAll().then(arr => arr.filter(s=>s.name.toLowerCase().includes(query.toLowerCase())));
-      else list = await ServiceAPI.getAll();
-      renderServices(list);
-    } catch (err) {
-      console.error(err);
+      });
     }
-  }
 
-  document.getElementById('serviceSearch').addEventListener('input', e => {
-    loadServices(e.target.value);
-  });
-
-  // initialize auth, services, and realtime updates
-  document.addEventListener('DOMContentLoaded', async () => {
-    UI.requireAuth();
-    await loadCustomerBookings(getUserId());
-    await loadServices();
-
-    Socket.connect();
-    Socket.onMessage(msg => {
-      if (msg.type && msg.type.startsWith('BOOKING_')) {
-        UI.toast(`Live update: ${msg.type}`, 'info');
-        loadCustomerBookings(getUserId());
+    async function loadServices(query = '') {
+      try {
+        let list = await ServiceAPI.getAll();
+        if (query) {
+          list = list.filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
+        }
+        renderServices(list);
+      } catch (err) {
+        console.error('Failed to load services:', err);
+        UI.toast('Failed to load services', 'error');
       }
+    }
+
+    async function loadCustomerBookings(customerId) {
+      try {
+        const response = await BookingAPI.getByCustomer(customerId);
+        const bookings = Array.isArray(response) ? response : [];
+
+        const container = document.querySelector('.booking-list');
+        if (bookings.length === 0) {
+          container.innerHTML = '<p style="color:var(--muted);padding:20px;text-align:center">No bookings yet</p>';
+          return;
+        }
+
+        container.innerHTML = bookings.map(b => {
+          const iconMap = {
+            PENDING: '⏳',
+            CONFIRMED: '✅',
+            COMPLETED: '🎉',
+            CANCELLED: '❌'
+          };
+          const statusClassMap = {
+            PENDING: 'status-pending',
+            CONFIRMED: 'status-confirmed',
+            COMPLETED: 'status-completed',
+            CANCELLED: 'status-cancelled'
+          };
+          const statusLabelMap = {
+            PENDING: 'Pending',
+            CONFIRMED: 'Confirmed',
+            COMPLETED: 'Completed',
+            CANCELLED: 'Cancelled'
+          };
+
+          return `
+          <div class="booking-item">
+            <div class="booking-icon plumb">${iconMap[b.status] || '📅'}</div>
+            <div class="booking-details">
+              <div class="booking-name">Service #${b.serviceId}</div>
+              <div class="booking-date">${new Date(b.bookingDate).toLocaleDateString()}</div>
+            </div>
+            <span class="status-pill ${statusClassMap[b.status]}">${statusLabelMap[b.status]}</span>
+          </div>
+        `;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load bookings:', err);
+      }
+    }
+
+    document.getElementById('serviceSearch').addEventListener('input', e => {
+      loadServices(e.target.value);
     });
-  });
-</script>
-<!-- socket.io client for real-time events -->
-<script src="http://localhost:8080/socket.io/socket.io.js"></script>
-<script src="api.js"></script>
+
+    // Initialize auth, services, and realtime updates
+    document.addEventListener('DOMContentLoaded', async () => {
+      UI.requireAuth();
+
+      // Update sidebar user info
+      const userName = getUserName();
+      document.getElementById('sidebar-user-name').textContent = userName;
+      document.getElementById('greeting-name').textContent = userName;
+
+      await loadCustomerBookings(getUserId());
+      await loadServices();
+
+      Socket.connect(() => {
+        // Subscribe to personal notifications
+        Socket.subscribe('/user/queue/notifications', (msg) => {
+          console.log('User notification:', msg);
+          UI.toast(`Update: ${msg.message || msg}`, 'info');
+          loadCustomerBookings(getUserId());
+        });
+
+        // Subscribe to general booking updates (optional, if you want all)
+        // Socket.subscribe('/topic/bookings/**', ...)
+      });
+    });
+  </script>
+  <!-- socket.io client for real-time events -->
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="api.js"></script>
 </body>
+
 </html>

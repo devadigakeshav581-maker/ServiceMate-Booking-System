@@ -31,9 +31,11 @@ public class ServiceController {
         return ResponseEntity.ok(serviceRepository.findAll());
     }
 
-    @GetMapping("/provider/{id}")
-    public ResponseEntity<List<ServiceItem>> getByProvider(@PathVariable Long id) {
-        return ResponseEntity.ok(serviceRepository.findByProviderId(id));
+    @GetMapping("/provider")
+    public ResponseEntity<List<ServiceItem>> getByProvider() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(serviceRepository.findByProviderId(user.getId()));
     }
 
     @GetMapping("/{id}")
@@ -43,7 +45,9 @@ public class ServiceController {
 
     @PostMapping("/create")
     public ResponseEntity<ServiceItem> create(@RequestBody ServiceItem service) {
-        // Ensure the service is saved
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        service.setProviderId(user.getId());
         return ResponseEntity.ok(serviceRepository.save(service));
     }
 

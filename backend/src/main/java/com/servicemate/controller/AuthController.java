@@ -39,7 +39,14 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+        try {
+            return ResponseEntity.ok(authService.login(request));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(401).body(new java.util.HashMap<String, String>() {{
+                put("error", e.getMessage());
+            }});
+        }
     }
 
     @Operation(summary = "Verify user email", description = "Verifies a user's email address using a token sent during registration.")

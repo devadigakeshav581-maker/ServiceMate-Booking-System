@@ -28,11 +28,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_HOST=db
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/servicemate?allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_PASSWORD=Root@2026
       - SPRING_MAIL_USERNAME=keshavisdevadiga07@gmail.com
       - SPRING_MAIL_PASSWORD=dwiz cgdc jmjp knfw
-      - JWT_SECRET=your_very_long_and_secure_random_jwt_secret_key_here
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - CORS_ALLOWED_ORIGINS=http://localhost
 
   frontend:
     build:

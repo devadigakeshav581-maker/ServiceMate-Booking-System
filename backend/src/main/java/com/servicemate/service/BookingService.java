@@ -1,5 +1,6 @@
 package com.servicemate.service;
 
+import com.servicemate.dto.ActivityDto;
 import com.servicemate.dto.BookingRequest;
 import com.servicemate.dto.BookingResponse;
 import com.servicemate.repository.*;
@@ -35,6 +36,9 @@ public class BookingService {
     private UserRepository userRepository;
 
     @Autowired
+    private RealTimeService realTimeService;
+
+    @Autowired
     private JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
@@ -50,23 +54,55 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING);
         booking.setAddress(request.getAddress());
         booking.setNotes(request.getNotes());
-        booking.setBookingDate(LocalDateTime.now());
+        
+        if (request.getBookingDate() != null) {
+            try {
+                booking.setBookingDate(LocalDate.parse(request.getBookingDate()).atStartOfDay());
+            } catch (Exception e) {
+                booking.setBookingDate(LocalDateTime.now());
+            }
+        } else {
+            booking.setBookingDate(LocalDateTime.now());
+        }
 
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        // Broadcast for Admin dashboard
+        ActivityDto activity = new ActivityDto("BOOKING_CREATED", "New booking created by customer #" + request.getCustomerId());
+        realTimeService.broadcastActivity(activity);
+        
+        return savedBooking;
     }
 
     public Booking confirmBooking(Long id) {
         Booking booking = getById(id);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setConfirmedAt(LocalDateTime.now());
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        // Notify Customer
+        realTimeService.sendBookingUpdate(id.toString(), "CONFIRMED");
+        
+        // Broadcast for Admin dashboard
+        ActivityDto activity = new ActivityDto("BOOKING_CONFIRMED", "Booking #" + id + " has been confirmed");
+        realTimeService.broadcastActivity(activity);
+        
+        return savedBooking;
     }
 
     public Booking completeBooking(Long id) {
         Booking booking = getById(id);
         booking.setStatus(BookingStatus.COMPLETED);
         booking.setCompletedAt(LocalDateTime.now());
-
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        // Notify Customer
+        realTimeService.sendBookingUpdate(id.toString(), "COMPLETED");
+        
+        // Broadcast for Admin dashboard
+        ActivityDto activity = new ActivityDto("BOOKING_COMPLETED", "Booking #" + id + " has been completed");
+        realTimeService.broadcastActivity(activity);
+        
         // Send invoice email with attachment
         User customer = userRepository.findById(booking.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
@@ -90,7 +126,21 @@ public class BookingService {
             throw new RuntimeException("Failed to send invoice email", e);
         }
 
-        return bookingRepository.save(booking);
+        return savedBooking;
+    }
+
+    public List<BookingResponse> getBookingsByCustomer(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return getByCustomer(user.getId());
+    }
+
+    public List<BookingResponse> getBookingsByProvider(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return bookingRepository.findByProviderId(user.getId()).stream()
+                .map(this::mapToBookingResponse)
+                .collect(Collectors.toList());
     }
 
     public Booking cancelBooking(Long id) {
@@ -100,7 +150,16 @@ public class BookingService {
         }
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledAt(LocalDateTime.now());
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        // Notify Provider or relevant parties
+        realTimeService.sendBookingUpdate(id.toString(), "CANCELLED");
+        
+        // Broadcast for Admin dashboard
+        ActivityDto activity = new ActivityDto("BOOKING_CANCELLED", "Booking #" + id + " has been cancelled");
+        realTimeService.broadcastActivity(activity);
+        
+        return savedBooking;
     }
 
     public List<BookingResponse> getByCustomer(Long customerId) {
@@ -151,6 +210,7 @@ public class BookingService {
 
         serviceRepository.findById(booking.getServiceId()).ifPresent(service -> {
             response.setServiceName(service.getName());
+            response.setPrice(service.getPrice());
         });
         return response;
     }
