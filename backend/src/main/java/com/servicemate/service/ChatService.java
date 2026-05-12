@@ -65,7 +65,7 @@ public class ChatService {
                 .orElse(null);
 
         if (customer != null && provider != null) {
-            User recipient = sender.getId().equals(customer.getId()) ? provider : customer;
+            User recipient = sender.getEmail().equals(customer.getEmail()) ? provider : customer;
             Map<String, Object> notificationPayload = new HashMap<>();
             notificationPayload.put("type", "NEW_CHAT_MESSAGE");
             notificationPayload.put("bookingId", bookingId);

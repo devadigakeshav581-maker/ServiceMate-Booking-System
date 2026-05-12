@@ -52,8 +52,8 @@ const ProviderDashboard = () => {
         try {
             await BookingAPI.confirm(bookingId);
             fetchProviderBookings();
-        } catch (err) {
-            alert('Failed to confirm booking.');
+        } catch (error) {
+            api.toast(error.response?.data?.message || 'Failed to confirm booking.', 'error');
         }
     };
 
@@ -62,8 +62,8 @@ const ProviderDashboard = () => {
         try {
             await BookingAPI.complete(confirmDialog);
             fetchProviderBookings();
-        } catch (err) {
-            alert('Failed to complete booking.');
+        } catch (error) {
+            api.toast(error.response?.data?.message || 'Failed to complete booking.', 'error');
         }
         setConfirmDialog(null);
     };
@@ -185,7 +185,6 @@ const ProviderDashboard = () => {
                                     booking={b} 
                                     onConfirm={() => handleConfirmBooking(b.id)} 
                                     onComplete={() => setConfirmDialog(b.id)}
-                                    onChat={() => setActiveChatBooking(b)}
                                     onChat={() => setActiveChatBooking(b)}
                                 />
                             ))

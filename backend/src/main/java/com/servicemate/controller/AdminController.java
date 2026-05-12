@@ -1,7 +1,5 @@
 package com.servicemate.controller;
 
-import com.servicemate.repository.BookingRepository;
-import com.servicemate.repository.ServiceRepository;
 import com.servicemate.repository.UserRepository;
 import com.servicemate.repository.model.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -10,10 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -23,12 +19,6 @@ public class AdminController {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private BookingRepository bookingRepository;
-
-    @Autowired
-    private ServiceRepository serviceRepository;
 
     @GetMapping("/users")
     @PreAuthorize("hasAuthority('ADMIN')")

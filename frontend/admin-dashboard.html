@@ -974,7 +974,8 @@
       // Update sidebar user info
       const userName = getUserName();
       const userRole = getUserRole();
-      document.getElementById('sidebar-user-name')?.textContent = userName;
+      const sidebarUserName = document.getElementById('sidebar-user-name');
+      if (sidebarUserName) sidebarUserName.textContent = userName;
 
       loadUsers();
       loadStats();

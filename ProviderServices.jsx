@@ -90,9 +90,9 @@ const ProviderServices = () => {
             }
             closeModal();
             fetchServices();
-        } catch (err) {
-            console.error('Error saving service:', err);
-            alert('Failed to save service.');
+        } catch (error) {
+            console.error('Error saving service:', error);
+            api.toast(error.response?.data?.message || 'Failed to save service.', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -103,8 +103,8 @@ const ProviderServices = () => {
         try {
             await api.delete(`/api/services/${id}`);
             fetchServices();
-        } catch (err) {
-            alert('Could not delete service.');
+        } catch (error) {
+            api.toast(error.response?.data?.message || 'Could not delete service.', 'error');
         }
     };
 

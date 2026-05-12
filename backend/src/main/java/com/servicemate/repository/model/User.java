@@ -34,4 +34,8 @@ public class User {
 
     @Column(name = "is_online")
     private Boolean isOnline = false;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String profileImage;
 }

@@ -129,8 +129,10 @@ const ServiceAPI = {
 
 // Booking API
 const BookingAPI = {
-    getAll: async () => {
-        const response = await api.get('/api/bookings');
+    getAll: async (page = 0, size = 200, customerName = '') => {
+        const params = new URLSearchParams({ page: String(page), size: String(size) });
+        if (customerName) params.set('customerName', customerName);
+        const response = await api.get(`/api/bookings?${params}`);
         return response.data;
     },
     getMy: async () => {
@@ -191,10 +193,31 @@ const BookingAPI = {
 
 // Payment API
 const PaymentAPI = {
-    pay: async (paymentData) => {
-        const response = await api.post('/api/payments/pay', paymentData);
+    // Generic pay method updated to handle specific types
+    process: async (bookingId, amount, method, details = {}) => {
+        const payload = {
+            bookingId,
+            amount,
+            paymentMethod: method, // CASH, UPI, CARD
+            ...details
+        };
+        const response = await api.post('/api/payments/pay', payload);
         return response.data;
     },
+    
+    payWithUPI: async (bookingId, amount, upiId) => {
+        return await PaymentAPI.process(bookingId, amount, 'UPI', { upiId });
+    },
+    
+    payWithCard: async (bookingId, amount, cardDetails) => {
+        // cardDetails should contain cardNumber, expiryDate, cvv, cardHolderName
+        return await PaymentAPI.process(bookingId, amount, 'CARD', cardDetails);
+    },
+    
+    payWithCash: async (bookingId, amount) => {
+        return await PaymentAPI.process(bookingId, amount, 'CASH');
+    },
+
     getStatus: async (bookingId) => {
         const response = await api.get(`/api/payments/status/${bookingId}`);
         return response.data;
@@ -204,6 +227,30 @@ const PaymentAPI = {
             () => api.get(`/api/payments/customer/${userId}?page=${page}&size=${size}`),
             () => api.get(`/api/payments/user/${userId}?page=${page}&size=${size}`)
         ]);
+        return response.data;
+    }
+};
+
+// Review API
+const ReviewAPI = {
+    create: async (reviewData) => {
+        const response = await api.post('/api/reviews', reviewData);
+        return response.data;
+    },
+    getByService: async (serviceId, sort = 'createdAt,desc') => {
+        const response = await api.get(`/api/reviews/service/${serviceId}?sort=${sort}`);
+        return response.data;
+    },
+    getAverages: async () => {
+        const response = await api.get('/api/reviews/averages');
+        return response.data;
+    },
+    markHelpful: async (reviewId) => {
+        const response = await api.put(`/api/reviews/${reviewId}/helpful`);
+        return response.data;
+    },
+    report: async (reviewId, reason) => {
+        const response = await api.post(`/api/reviews/${reviewId}/report?reason=${encodeURIComponent(reason)}`);
         return response.data;
     }
 };
@@ -249,8 +296,15 @@ const UserAPI = {
         ]);
         return response.data;
     },
+    delete: async (userId) => {
+        await api.delete(`/api/admin/users/${userId}`);
+    },
     getOnlineCount: async () => {
         const response = await api.get('/api/users/online/count');
+        return response.data;
+    },
+    changePassword: async (currentPassword, newPassword) => {
+        const response = await api.put('/api/users/profile/password', { currentPassword, newPassword });
         return response.data;
     }
 };
@@ -270,11 +324,56 @@ const CategoryAPI = {
     }
 };
 
+// Coupon API (admin)
+const CouponAPI = {
+    getAll: async () => {
+        const response = await api.get('/api/admin/coupons');
+        return response.data;
+    },
+    create: async (coupon) => {
+        const response = await api.post('/api/admin/coupons', coupon);
+        return response.data;
+    }
+};
+
 // Admin/Reports API
 const AdminAPI = {
     getOverview: async () => {
         const response = await api.get('/api/reports/overview');
         return response.data;
+    },
+    getRevenueStats: async (period = 'MONTHLY') => {
+        const response = await api.get(`/api/reports/revenue?period=${period}`);
+        return response.data;
+    },
+    getMonthlyRevenueReport: async () => {
+        try {
+            const response = await api.get('/api/admin/reports/revenue/monthly');
+            console.log('Monthly Revenue Report:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching monthly revenue report:', error);
+            throw error;
+        }
+    },
+    getBookingStats: async () => {
+        const response = await api.get('/api/reports/bookings');
+        return response.data;
+    },
+    getReportedReviews: async () => {
+        const response = await api.get('/api/admin/reviews/reports');
+        return response.data;
+    },
+    approveReview: async (reviewId) => {
+        const response = await api.put(`/api/admin/reviews/approve/${reviewId}`);
+        return response.data;
+    },
+    dismissReports: async (reviewId) => {
+        const response = await api.delete(`/api/admin/reviews/reports/${reviewId}`);
+        return response.data;
+    },
+    deleteReview: async (reviewId) => {
+        await api.delete(`/api/admin/reviews/${reviewId}`);
     }
 };
 
@@ -357,9 +456,11 @@ export {
     ServiceAPI, 
     BookingAPI, 
     PaymentAPI,
+    ReviewAPI,
     ChatAPI,
     UserAPI,
     AdminAPI,
     CategoryAPI,
+    CouponAPI,
     Socket 
 };

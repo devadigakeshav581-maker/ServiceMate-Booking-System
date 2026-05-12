@@ -5,6 +5,7 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const role = localStorage.getItem('role');
     const name = localStorage.getItem('name') || 'User';
+    const profileImage = localStorage.getItem('profileImage');
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -78,6 +79,12 @@ const Sidebar = () => {
                         <Link to="/admin/payments" className={`flex items-center gap-3 px-6 py-3 text-[#7070a0] text-sm transition-all hover:text-white hover:bg-[#1c1c27] sidebar-item ${isActive('/admin/payments')}`}>
                             <span className="w-5 text-center text-lg">💳</span> Payments
                         </Link>
+                        <Link to="/admin/reviews" className={`flex items-center gap-3 px-6 py-3 text-[#7070a0] text-sm transition-all hover:text-white hover:bg-[#1c1c27] sidebar-item ${isActive('/admin/reviews')}`}>
+                            <span className="w-5 text-center text-lg">⭐</span> Reviews
+                        </Link>
+                        <Link to="/admin/coupons" className={`flex items-center gap-3 px-6 py-3 text-[#7070a0] text-sm transition-all hover:text-white hover:bg-[#1c1c27] sidebar-item ${isActive('/admin/coupons')}`}>
+                            <span className="w-5 text-center text-lg">🏷️</span> Coupons
+                        </Link>
                         <Link to="/admin/settings" className={`flex items-center gap-3 px-6 py-3 text-[#7070a0] text-sm transition-all hover:text-white hover:bg-[#1c1c27] sidebar-item ${isActive('/admin/settings')}`}>
                             <span className="w-5 text-center text-lg">⚙️</span> Settings
                         </Link>
@@ -98,8 +105,12 @@ const Sidebar = () => {
 
             <div className="mt-auto px-6 pt-6 border-t border-[#2a2a3a]">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#6c63ff] to-[#ff6584] flex items-center justify-center font-bold text-white text-sm">
-                        {name.charAt(0).toUpperCase()}
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#6c63ff] to-[#ff6584] flex items-center justify-center font-bold text-white text-sm overflow-hidden">
+                        {profileImage ? (
+                            <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            name.charAt(0).toUpperCase()
+                        )}
                     </div>
                     <div>
                         <div className="text-white text-sm font-medium leading-tight">{name}</div>

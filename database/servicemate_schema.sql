@@ -140,6 +140,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     provider_id  BIGINT       NOT NULL,
     rating       TINYINT      NOT NULL CHECK (rating BETWEEN 1 AND 5),
     comment      TEXT,
+    helpful_count INT NOT NULL DEFAULT 0,
+    status       VARCHAR(20) NOT NULL DEFAULT 'VISIBLE',
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),

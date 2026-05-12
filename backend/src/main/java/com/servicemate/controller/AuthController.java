@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -42,10 +43,7 @@ public class AuthController {
         try {
             return ResponseEntity.ok(authService.login(request));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(401).body(new java.util.HashMap<String, String>() {{
-                put("error", e.getMessage());
-            }});
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
         }
     }
 

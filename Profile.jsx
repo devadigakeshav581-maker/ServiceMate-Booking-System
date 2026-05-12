@@ -5,7 +5,8 @@ const Profile = () => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        phone: ''
+        phone: '',
+        profileImage: null
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -28,8 +29,12 @@ const Profile = () => {
             setFormData({
                 name: response.data.name || '',
                 email: response.data.email || '',
-                phone: response.data.phone || ''
+                phone: response.data.phone || '',
+                profileImage: response.data.profileImage || null
             });
+            if (response.data.profileImage) {
+                localStorage.setItem('profileImage', response.data.profileImage);
+            }
         } catch (err) {
             console.error('Error fetching profile:', err);
             setError('Failed to load profile data.');
@@ -40,6 +45,27 @@ const Profile = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Convert to Base64
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64Image = reader.result;
+            try {
+                await api.put('/api/users/profile-image', { profileImage: base64Image });
+                setFormData({ ...formData, profileImage: base64Image });
+                localStorage.setItem('profileImage', base64Image);
+                setSuccess('Profile picture updated successfully!');
+            } catch (err) {
+                console.error('Error updating profile picture:', err);
+                setError('Failed to update profile picture.');
+            }
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleSubmit = async (e) => {
@@ -100,9 +126,18 @@ const Profile = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Left: Profile Summary */}
                 <div className="space-y-6">
-                    <div className="premium-card text-center py-10">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#6c63ff] to-[#ff6584] mx-auto mb-4 flex items-center justify-center text-4xl font-black text-white shadow-lg">
-                            {formData.name.charAt(0).toUpperCase()}
+                    <div className="premium-card text-center py-10 relative">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#6c63ff] to-[#ff6584] mx-auto mb-4 flex items-center justify-center text-4xl font-black text-white shadow-lg overflow-hidden group/avatar relative">
+                            {formData.profileImage ? (
+                                <img src={formData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                formData.name.charAt(0).toUpperCase()
+                            )}
+                            <label className="absolute inset-0 bg-black/50 opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity duration-300">
+                                <span className="text-xl">📷</span>
+                                <span className="text-[0.6rem] font-bold uppercase tracking-widest mt-1">Upload</span>
+                                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </label>
                         </div>
                         <h2 className="text-xl font-bold text-white">{formData.name}</h2>
                         <p className="text-[#7070a0] text-sm">{formData.email}</p>

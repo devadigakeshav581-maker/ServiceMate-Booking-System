@@ -4,6 +4,7 @@ import com.servicemate.dto.ReviewRequest;
 import com.servicemate.dto.ReviewResponse;
 import com.servicemate.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,7 +41,7 @@ public class ReviewController {
             @ApiResponse(responseCode = "403", description = "Forbidden - User is not the owner of the booking or booking is not completed")
     })
     @PostMapping
-    public ResponseEntity<?> createReview(@RequestBody ReviewRequest reviewRequest,
+    public ResponseEntity<?> createReview(@Valid @RequestBody ReviewRequest reviewRequest,
                                           @AuthenticationPrincipal UserDetails userDetails) {
         try {
             // The username from UserDetails is the user's email.

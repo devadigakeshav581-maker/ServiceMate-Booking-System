@@ -5,19 +5,13 @@ import com.servicemate.repository.model.User;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -33,16 +27,14 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<User> getProfile() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmail(getAuthenticatedEmail())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/profile")
     public ResponseEntity<User> updateProfile(@RequestBody User profileData) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email).map(user -> {
+        return userRepository.findByEmail(getAuthenticatedEmail()).map(user -> {
             user.setName(profileData.getName());
             user.setPhone(profileData.getPhone());
             // Email change is usually more complex (verification), keeping it simple for now
@@ -52,11 +44,10 @@ public class UserController {
 
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         String currentPassword = request.get("currentPassword");
         String newPassword = request.get("newPassword");
 
-        return userRepository.findByEmail(email).map(user -> {
+        return userRepository.findByEmail(getAuthenticatedEmail()).map(user -> {
             if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Incorrect current password"));
             }
@@ -66,9 +57,20 @@ public class UserController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/profile-image")
+    public ResponseEntity<?> updateProfileImage(@RequestBody Map<String, String> request) {
+        String profileImage = request.get("profileImage");
+
+        return userRepository.findByEmail(getAuthenticatedEmail()).map(user -> {
+            user.setProfileImage(profileImage);
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("message", "Profile image updated successfully"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/online")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public List<User> getOnlineUsers() {
+    public java.util.List<User> getOnlineUsers() {
         return userRepository.findByIsOnlineTrue();
     }
 
@@ -78,5 +80,9 @@ public class UserController {
         Map<String, Long> response = new HashMap<>();
         response.put("count", userRepository.countByIsOnlineTrue());
         return response;
+    }
+
+    private String getAuthenticatedEmail() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }

@@ -2,7 +2,6 @@ package com.servicemate.service;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -19,20 +18,23 @@ public class RateLimitingService {
     }
 
     private Bucket newBucket(String role) {
-        Bandwidth limit;
+        long capacity;
         if ("ADMIN".equals(role)) {
             // 100 requests per minute for Admins
-            limit = Bandwidth.classic(100, Refill.greedy(100, Duration.ofMinutes(1)));
+            capacity = 100;
         } else if ("PROVIDER".equals(role)) {
             // 50 requests per minute for Providers
-            limit = Bandwidth.classic(50, Refill.greedy(50, Duration.ofMinutes(1)));
+            capacity = 50;
         } else {
             // 20 requests per minute for Customers/Anonymous
-            limit = Bandwidth.classic(20, Refill.greedy(20, Duration.ofMinutes(1)));
+            capacity = 20;
         }
 
         return Bucket.builder()
-                .addLimit(limit)
+                .addLimit(Bandwidth.builder()
+                        .capacity(capacity)
+                        .refillGreedy(capacity, Duration.ofMinutes(1))
+                        .build())
                 .build();
     }
 }

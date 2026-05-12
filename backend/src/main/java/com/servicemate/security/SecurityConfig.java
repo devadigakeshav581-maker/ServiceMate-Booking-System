@@ -60,13 +60,14 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/auth/**", // Auth endpoints
                     "/v3/api-docs/**", "/swagger-ui/**", // Swagger/OpenAPI
-                    "/", "/*.html", "/*.js", "/*.css", "/*.ico", "/images/**", // Static frontend assets
+                    "/", "/*.html", "/*.js", "/*.css", "/*.ico", "/images/**", "/uploads/**", // Static assets
                     "/ws/**", // WebSocket endpoint
                     "/error"
                 ).permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/**").hasAuthority("ADMIN")
-                .requestMatchers("/api/users/online/**", "/api/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/users/online/**", "/api/admin/**", "/api/admin/reviews/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/provider/availability/**").hasAuthority("PROVIDER") // Providers manage their availability
                 .requestMatchers("/api/users/profile", "/api/users/change-password").authenticated()
                 .anyRequest().authenticated()
             )

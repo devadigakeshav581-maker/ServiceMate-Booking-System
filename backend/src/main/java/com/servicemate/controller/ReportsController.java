@@ -1,7 +1,6 @@
 package com.servicemate.controller;
 
 import com.servicemate.repository.BookingRepository;
-import com.servicemate.repository.ServiceRepository;
 import com.servicemate.repository.UserRepository;
 import com.servicemate.repository.model.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

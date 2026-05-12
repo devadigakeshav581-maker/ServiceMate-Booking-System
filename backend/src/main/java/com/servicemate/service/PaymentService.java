@@ -67,9 +67,25 @@ public class PaymentService {
     }
 
     public PaymentResponse refundPayment(String transactionRef) {
-        // TODO: Implement refund logic.
-        // This requires updating the PaymentRepository to find by transaction reference
-        // and updating the PaymentStatus enum and DB schema to include a 'REFUNDED' status.
-        throw new UnsupportedOperationException("Refund functionality is not yet implemented.");
+        Payment payment = paymentRepository.findByTransactionRef(transactionRef)
+                .orElseThrow(() -> new RuntimeException("Payment with reference " + transactionRef + " not found"));
+
+        if (payment.getStatus() == PaymentStatus.REFUNDED) {
+            throw new IllegalStateException("Payment is already refunded.");
+        }
+
+        // Simulate refund gateway interaction (95% success rate)
+        boolean isRefundSuccess = Math.random() < 0.95;
+
+        if (isRefundSuccess) {
+            payment.setStatus(PaymentStatus.REFUNDED);
+            paymentRepository.save(payment);
+        }
+
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getStatus().name(),
+                isRefundSuccess ? "Refund processed successfully." : "Refund failed at gateway.",
+                payment.getPaymentDate());
     }
 }

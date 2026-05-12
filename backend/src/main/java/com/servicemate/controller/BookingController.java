@@ -5,14 +5,17 @@ import com.servicemate.dto.BookingRequest;
 import com.servicemate.dto.BookingResponse;
 import com.servicemate.repository.model.Booking;
 import com.servicemate.repository.UserRepository;
-import com.servicemate.repository.model.User;
+import com.servicemate.repository.ServiceRepository;
+import com.servicemate.repository.model.ServiceItem;
 import com.servicemate.service.RealTimeService;
 import com.servicemate.service.BookingService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.servicemate.service.ProviderAvailabilityService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -23,18 +26,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/bookings")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 @Tag(name = "Booking Management", description = "APIs for creating, retrieving, and managing bookings")
 @SecurityRequirement(name = "bearerAuth")
 public class BookingController {
 
-    @Autowired
-    private BookingService bookingService;
-
-    @Autowired
-    private RealTimeService realTimeService;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final BookingService bookingService;
+    private final RealTimeService realTimeService;
+    private final UserRepository userRepository;
+    private final ProviderAvailabilityService availabilityService;
+    private final ServiceRepository serviceRepository;
 
     @GetMapping
     public ResponseEntity<Page<Booking>> getAllBookings(
@@ -72,8 +73,20 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/confirm")
-    public ResponseEntity<Booking> confirmBooking(@PathVariable Long id) {
-        Booking booking = bookingService.confirmBooking(id);
+    public ResponseEntity<?> confirmBooking(@PathVariable Long id) {
+        Booking booking = bookingService.getById(id);
+        if (booking == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Check provider availability before confirmation
+        ServiceItem service = serviceRepository.findById(booking.getServiceId()).orElse(null);
+        if (service != null && !availabilityService.isAvailableAt(service.getProviderId(), booking.getBookingDate())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Provider is not available at the scheduled time."));
+        }
+
+        booking = bookingService.confirmBooking(id);
         String activityMessage = String.format("Booking #%d was confirmed.", booking.getId());
         realTimeService.broadcastActivity(new ActivityDto("BOOKING_CONFIRMED", activityMessage));
         notifyCustomerOfStatusChange(booking, "Your booking has been confirmed!");

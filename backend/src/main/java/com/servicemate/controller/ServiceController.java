@@ -4,6 +4,7 @@ import com.servicemate.repository.ServiceRepository;
 import com.servicemate.repository.UserRepository;
 import com.servicemate.repository.model.ServiceItem;
 import com.servicemate.repository.model.User;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.stream.Collectors;
 import java.util.List;
 
 @RestController
@@ -40,7 +42,26 @@ public class ServiceController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ServiceItem> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(serviceRepository.findById(id).orElse(null));
+        return serviceRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Search services with advanced filters")
+    @GetMapping("/search/advanced")
+    public ResponseEntity<List<ServiceItem>> searchServices(
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String category) {
+        
+        // Note: For production, this filtering should be handled by a custom Repository method or JPA Specification
+        List<ServiceItem> filtered = serviceRepository.findAll().stream()
+                .filter(s -> (category == null || s.getCategory().equalsIgnoreCase(category)))
+                .filter(s -> (minPrice == null || s.getPrice() >= minPrice))
+                .filter(s -> (maxPrice == null || s.getPrice() <= maxPrice))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filtered);
     }
 
     @PostMapping("/create")

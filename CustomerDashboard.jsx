@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api, { Socket, ServiceAPI, BookingAPI, CategoryAPI, PaymentAPI } from './api';
+import api, { Socket, ServiceAPI, BookingAPI, CategoryAPI, PaymentAPI, ReviewAPI } from './api';
 import Pagination from './Pagination';
 import BookingModal from './BookingModal';
 import ChatWindow from './ChatWindow';
@@ -29,14 +29,8 @@ const CustomerDashboard = () => {
             return [];
         }
     });
-    const [reviewsByBooking, setReviewsByBooking] = useState(() => {
-        try {
-            const raw = localStorage.getItem('customerBookingReviews');
-            return raw ? JSON.parse(raw) : {};
-        } catch {
-            return {};
-        }
-    });
+    const [reviewsByBooking, setReviewsByBooking] = useState({});
+    const [serviceRatings, setServiceRatings] = useState({});
     const [reviewModal, setReviewModal] = useState({ open: false, booking: null, rating: 5, comment: '' });
     const [paymentModal, setPaymentModal] = useState({ open: false, booking: null, method: 'UPI', processing: false });
     const [paymentHistory, setPaymentHistory] = useState(() => {
@@ -124,6 +118,14 @@ const CustomerDashboard = () => {
                         : []
                 );
             }
+
+            // Fetch service ratings
+            try {
+                const ratings = await ReviewAPI.getAverages();
+                setServiceRatings(ratings || {});
+            } catch (err) {
+                console.warn('Could not load service ratings');
+            }
         } catch (err) {
             console.error('Error fetching customer data:', err);
             setError('Some dashboard sections could not be refreshed.');
@@ -141,10 +143,6 @@ const CustomerDashboard = () => {
     useEffect(() => {
         localStorage.setItem('customerFavoriteServices', JSON.stringify(favoriteServices));
     }, [favoriteServices]);
-
-    useEffect(() => {
-        localStorage.setItem('customerBookingReviews', JSON.stringify(reviewsByBooking));
-    }, [reviewsByBooking]);
 
     useEffect(() => {
         localStorage.setItem('customerPaymentHistory', JSON.stringify(paymentHistory));
@@ -199,7 +197,7 @@ const CustomerDashboard = () => {
             await BookingAPI.cancel(bookingId);
             fetchData();
         } catch (err) {
-            alert('Failed to cancel.');
+            api.toast(err.response?.data?.message || 'Failed to cancel booking.', 'error');
         }
     };
 
@@ -241,18 +239,28 @@ const CustomerDashboard = () => {
         });
     };
 
-    const submitReview = () => {
+    const submitReview = async () => {
         if (!reviewModal.booking) return;
-        setReviewsByBooking((prev) => ({
-            ...prev,
-            [String(reviewModal.booking.id)]: {
+        try {
+            await ReviewAPI.create({
+                bookingId: reviewModal.booking.id,
                 rating: reviewModal.rating,
-                comment: reviewModal.comment,
-                updatedAt: new Date().toISOString()
-            }
-        }));
-        setReviewModal({ open: false, booking: null, rating: 5, comment: '' });
-        api.toast('Review saved successfully.');
+                comment: reviewModal.comment
+            });
+            setReviewsByBooking(prev => ({
+                ...prev,
+                [String(reviewModal.booking.id)]: {
+                    rating: reviewModal.rating,
+                    comment: reviewModal.comment,
+                    updatedAt: new Date().toISOString()
+                }
+            }));
+            setReviewModal({ open: false, booking: null, rating: 5, comment: '' });
+            api.toast('Review submitted successfully!');
+            fetchData(); // Refresh ratings
+        } catch (err) {
+            api.toast(err.response?.data?.message || 'Failed to submit review.', 'error');
+        }
     };
 
     const openPaymentModal = (booking) => {
@@ -306,8 +314,9 @@ const CustomerDashboard = () => {
 
         if (path === '/customer/services') {
             let filteredServices = services.filter(s => 
-                (s.name || '').toLowerCase().includes(serviceSearch.toLowerCase()) ||
-                (s.category || '').toLowerCase().includes(serviceSearch.toLowerCase())
+                ((s.name || '').toLowerCase().includes(serviceSearch.toLowerCase()) ||
+                (s.category || '').toLowerCase().includes(serviceSearch.toLowerCase())) &&
+                (bookingStatusFilter === 'ALL' || s.category === bookingStatusFilter)
             );
             if (serviceSortBy === 'PRICE_LOW_HIGH') {
                 filteredServices = [...filteredServices].sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -315,57 +324,101 @@ const CustomerDashboard = () => {
                 filteredServices = [...filteredServices].sort((a, b) => (b.price || 0) - (a.price || 0));
             } else if (serviceSortBy === 'NAME_A_Z') {
                 filteredServices = [...filteredServices].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else if (serviceSortBy === 'RATING') {
+                filteredServices = [...filteredServices].sort((a, b) => (serviceRatings[b.id] || 0) - (serviceRatings[a.id] || 0));
             }
             return (
-                <div className="premium-card">
-                    <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold">Browse Professional Services</h2>
-                        <div className="flex gap-3">
-                            <input 
-                                type="text" 
-                                value={serviceSearch}
-                                onChange={(e) => setServiceSearch(e.target.value)}
-                                placeholder="Type to search services..." 
-                                className="premium-input w-72" 
-                            />
-                            <select
-                                value={serviceSortBy}
-                                onChange={(e) => setServiceSortBy(e.target.value)}
-                                className="premium-input text-xs"
-                            >
-                                <option value="POPULAR">Popular</option>
-                                <option value="PRICE_LOW_HIGH">Price: Low to High</option>
-                                <option value="PRICE_HIGH_LOW">Price: High to Low</option>
-                                <option value="NAME_A_Z">Name: A-Z</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredServices.map(service => (
-                            <div key={service.id} className="bg-[#1c1c27] border border-[#2a2a3a] rounded-2xl p-6 hover:border-[#6c63ff]/50 hover:translate-y-[-4px] transition-all group shadow-lg">
-                                <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">
-                                    {service.category === 'Electrical' ? '⚡' : service.category === 'Cleaning' ? '🧹' : service.category === 'AC Repair' ? '❄️' : '🔧'}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="premium-card">
+                            <h3 className="font-bold mb-4 flex items-center gap-2">
+                                <span>🔍</span> Filters
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[0.65rem] font-black uppercase tracking-wider text-[#7070a0]">Search</label>
+                                    <input 
+                                        type="text" 
+                                        value={serviceSearch}
+                                        onChange={(e) => setServiceSearch(e.target.value)}
+                                        placeholder="Service name..." 
+                                        className="premium-input w-full" 
+                                    />
                                 </div>
-                                <div className="font-black text-xl mb-1">{service.name}</div>
-                                <div className="text-xs text-[#7070a0] mb-6 line-clamp-2">{service.description}</div>
-                                <div className="flex justify-between items-center pt-4 border-t border-[#2a2a3a]">
-                                    <div className="text-lg font-black text-[#43e97b]">₹{service.price}</div>
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => toggleFavoriteService(service.name)}
-                                            className="text-[#ff6584] font-bold text-xs hover:underline uppercase tracking-widest"
-                                        >
-                                            {favoriteServices.includes(service.name) ? 'Unfavorite' : 'Favorite'}
-                                        </button>
-                                        <button onClick={() => setIsModalOpen(true)} className="text-[#6c63ff] font-bold text-xs hover:underline uppercase tracking-widest">Book Now</button>
-                                    </div>
+                                <div className="space-y-2">
+                                    <label className="text-[0.65rem] font-black uppercase tracking-wider text-[#7070a0]">Category</label>
+                                    <select
+                                        value={bookingStatusFilter}
+                                        onChange={(e) => setBookingStatusFilter(e.target.value)}
+                                        className="premium-input w-full text-xs"
+                                    >
+                                        <option value="ALL">All Categories</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[0.65rem] font-black uppercase tracking-wider text-[#7070a0]">Sort By</label>
+                                    <select
+                                        value={serviceSortBy}
+                                        onChange={(e) => setServiceSortBy(e.target.value)}
+                                        className="premium-input w-full text-xs"
+                                    >
+                                        <option value="POPULAR">Recommended</option>
+                                        <option value="RATING">Highest Rated</option>
+                                        <option value="PRICE_LOW_HIGH">Price: Low to High</option>
+                                        <option value="PRICE_HIGH_LOW">Price: High to Low</option>
+                                        <option value="NAME_A_Z">Name: A-Z</option>
+                                    </select>
                                 </div>
                             </div>
-                        ))}
+                        </div>
                     </div>
-                    {filteredServices.length === 0 && (
-                        <div className="text-center py-12 text-[#7070a0] italic">No services found for your search.</div>
-                    )}
+                    
+                    <div className="lg:col-span-3 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {filteredServices.map(service => (
+                                <div key={service.id} className="bg-[#1c1c27] border border-[#2a2a3a] rounded-2xl p-6 hover:border-[#6c63ff]/50 hover:translate-y-[-4px] transition-all group shadow-lg">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="text-3xl group-hover:scale-110 transition-transform">
+                                            {service.category === 'Electrical' ? '⚡' : service.category === 'Cleaning' ? '🧹' : service.category === 'AC Repair' ? '❄️' : '🔧'}
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[0.65rem] font-black bg-[#6c63ff]/10 text-[#6c63ff] px-2 py-1 rounded-md uppercase mb-1">{service.category}</span>
+                                            {serviceRatings[service.id] && (
+                                                <div className="flex items-center gap-1 text-xs font-bold text-yellow-400">
+                                                    ⭐ {serviceRatings[service.id].toFixed(1)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="font-black text-xl mb-1">{service.name}</div>
+                                    <div className="text-xs text-[#7070a0] mb-6 line-clamp-2">{service.description}</div>
+                                    <div className="flex justify-between items-center pt-4 border-t border-[#2a2a3a]">
+                                        <div className="text-lg font-black text-[#43e97b]">₹{service.price}</div>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => toggleFavoriteService(service.name)}
+                                                className={`font-bold text-xs hover:underline uppercase tracking-widest ${favoriteServices.includes(service.name) ? 'text-[#ff6584]' : 'text-[#7070a0]'}`}
+                                            >
+                                                {favoriteServices.includes(service.name) ? 'Favorited' : 'Favorite'}
+                                            </button>
+                                            <button onClick={() => setIsModalOpen(true)} className="text-[#6c63ff] font-bold text-xs hover:underline uppercase tracking-widest">Book Now</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {filteredServices.length === 0 && (
+                            <div className="premium-card text-center py-20">
+                                <span className="text-4xl mb-4 block">🏝️</span>
+                                <h3 className="text-xl font-bold mb-2">No services match your filters</h3>
+                                <p className="text-[#7070a0]">Try adjusting your search or category selection.</p>
+                                <button onClick={() => { setServiceSearch(''); setBookingStatusFilter('ALL'); }} className="mt-6 text-[#6c63ff] font-bold hover:underline">Clear All Filters</button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             );
         }

@@ -9,4 +9,5 @@ public class BookingRequest {
     private String address;
     private String notes;
     private String bookingDate;
+    private String promoCode;
 }
